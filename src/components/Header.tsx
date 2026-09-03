@@ -16,13 +16,14 @@ import {
 import { isSupabaseConfigured } from '@/lib/supabase';
 
 interface HeaderProps {
-  activeTab: 'feed' | 'analytics' | 'crm';
-  setActiveTab: (tab: 'feed' | 'analytics' | 'crm') => void;
+  activeTab: 'feed' | 'profiles' | 'analytics' | 'crm';
+  setActiveTab: (tab: 'feed' | 'profiles' | 'analytics' | 'crm') => void;
   onOpenAddModal: () => void;
   onOpenBulkModal: () => void;
   onOpenCategoryModal: () => void;
   onResetToRealData?: () => void;
   totalLinksCount: number;
+  totalProfilesCount?: number;
 }
 
 export default function Header({
@@ -33,6 +34,7 @@ export default function Header({
   onOpenCategoryModal,
   onResetToRealData,
   totalLinksCount,
+  totalProfilesCount,
 }: HeaderProps) {
   return (
     <header style={{
@@ -205,6 +207,39 @@ export default function Header({
             }}>
               {totalLinksCount}
             </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('profiles')}
+            id="tab-profiles"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 16px',
+              borderRadius: 'var(--radius-md)',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              background: activeTab === 'profiles' ? 'rgba(236, 72, 153, 0.2)' : 'transparent',
+              color: activeTab === 'profiles' ? '#f472b6' : 'var(--text-muted)',
+              border: activeTab === 'profiles' ? '1px solid rgba(236, 72, 153, 0.4)' : '1px solid transparent',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <Users2 size={16} />
+            <span>Profil Akun & Talent</span>
+            {totalProfilesCount !== undefined && (
+              <span style={{
+                background: 'rgba(236, 72, 153, 0.2)',
+                color: '#f472b6',
+                padding: '1px 6px',
+                borderRadius: 10,
+                fontSize: '0.72rem',
+                fontWeight: 700,
+              }}>
+                {totalProfilesCount}
+              </span>
+            )}
           </button>
 
           <button

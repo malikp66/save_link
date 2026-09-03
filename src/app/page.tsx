@@ -9,13 +9,17 @@ import BulkImportModal from '@/components/BulkImportModal';
 import CategoryManagerModal from '@/components/CategoryManagerModal';
 import AnalyticsView from '@/components/AnalyticsView';
 import OutreachCrmView from '@/components/OutreachCrmView';
+import ProfilesView from '@/components/ProfilesView';
+import ProfileDetailModal from '@/components/ProfileDetailModal';
 import SupabaseAlertBanner from '@/components/SupabaseAlertBanner';
 import CustomSelect, { SelectOption } from '@/components/CustomSelect';
+import { aggregateCreatorProfiles } from '@/lib/profileAggregator';
 import { 
   SavedLink, 
   Category, 
   OutreachStatus, 
-  Platform 
+  Platform,
+  CreatorProfile
 } from '@/types';
 
 const STATUS_FILTER_OPTIONS: SelectOption[] = [
@@ -64,7 +68,14 @@ export default function Home() {
   const [supabaseStatus, setSupabaseStatus] = useState<SupabaseStatusResult | null>(null);
 
   // Tabs
-  const [activeTab, setActiveTab] = useState<'feed' | 'analytics' | 'crm'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'profiles' | 'analytics' | 'crm'>('feed');
+
+  // Creator Profiles
+  const [selectedProfile, setSelectedProfile] = useState<CreatorProfile | null>(null);
+
+  const creatorProfiles = useMemo(() => {
+    return aggregateCreatorProfiles(links);
+  }, [links]);
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -231,6 +242,7 @@ export default function Home() {
         onOpenCategoryModal={() => setIsCategoryOpen(true)}
         onResetToRealData={handleResetToRealData}
         totalLinksCount={links.length}
+        totalProfilesCount={creatorProfiles.length}
       />
 
       {/* Supabase Connection Alert Banner */}
@@ -505,12 +517,26 @@ export default function Home() {
           </div>
         )}
 
-        {/* TAB 2: DEEP ANALYTICS & TRENDS */}
+        {/* TAB 2: CREATOR PROFILES & DIRECTORY */}
+        {activeTab === 'profiles' && (
+          <ProfilesView
+            profiles={creatorProfiles}
+            categories={categories}
+            onSelectProfile={(p) => setSelectedProfile(p)}
+            onUpdateStatus={async (linkIds, status) => {
+              for (const id of linkIds) {
+                await handleUpdateStatus(id, status);
+              }
+            }}
+          />
+        )}
+
+        {/* TAB 3: DEEP ANALYTICS & TRENDS */}
         {activeTab === 'analytics' && (
           <AnalyticsView links={links} categories={categories} />
         )}
 
-        {/* TAB 3: TALENT OUTREACH CRM */}
+        {/* TAB 4: TALENT OUTREACH CRM */}
         {activeTab === 'crm' && (
           <OutreachCrmView
             links={links}
@@ -521,6 +547,20 @@ export default function Home() {
       </main>
 
       {/* Modals */}
+      {selectedProfile && (
+        <ProfileDetailModal
+          profile={selectedProfile}
+          categories={categories}
+          onClose={() => setSelectedProfile(null)}
+          onUpdateStatus={async (linkIds, status) => {
+            for (const id of linkIds) {
+              await handleUpdateStatus(id, status);
+            }
+            setSelectedProfile((prev) => prev ? { ...prev, outreach_status: status } : null);
+          }}
+          onOpenContentDetail={(item) => setSelectedDetailItem(item)}
+        />
+      )}
       {isAddOpen && (
         <AddLinkModal
           categories={categories}

@@ -73,3 +73,25 @@ export interface ParsedLinkData {
   shares_count?: number;
   engagement_rate?: number;
 }
+
+export interface CreatorProfile {
+  id: string;
+  username: string;
+  name: string;
+  avatar_url?: string;
+  profile_url?: string;
+  platforms: Platform[];
+  talent_type?: string;
+  rating: number;
+  outreach_status: OutreachStatus;
+  contact_phone?: string;
+  contact_email?: string;
+  contact_notes?: string;
+  items: SavedLink[];
+  total_views: number;
+  total_likes: number;
+  total_comments: number;
+  total_shares: number;
+  avg_engagement_rate: number;
+  last_activity_at: string;
+}
