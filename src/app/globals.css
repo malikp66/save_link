@@ -332,82 +332,169 @@ select option {
 }
 
 /* ========================================
-   MOBILE RESPONSIVE STYLES
+   MOBILE RESPONSIVE SYSTEM
    ======================================== */
+
+.desktop-only {
+  display: block;
+}
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: block !important;
+  }
+}
+
+/* Responsive Grids for Forms and Modals */
+.grid-responsive-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.grid-responsive-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.detail-modal-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1.2fr;
+  gap: 22px;
+}
+
+@media (max-width: 768px) {
+  .grid-responsive-2 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .grid-responsive-3 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .detail-modal-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}
 
 /* Mobile: Header */
 @media (max-width: 768px) {
-  header .app-container,
-  header > div > div {
-    padding: 10px 12px !important;
+  header {
+    padding: 8px 0 !important;
+  }
+  
+  header .app-container {
+    padding: 0 12px !important;
   }
 
-  /* Stack header action buttons vertically */
-  header [style*="gap: 8px"][style*="flex-wrap"] {
+  /* Compact top bar */
+  .header-top-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+  }
+
+  .header-actions {
+    display: flex !important;
+    align-items: center !important;
     gap: 6px !important;
+    flex-wrap: nowrap !important;
   }
 
   /* Smaller title */
   header h1 {
-    font-size: 1rem !important;
+    font-size: 1.05rem !important;
   }
 
-  /* Smaller tabs */
-  header button {
-    font-size: 0.72rem !important;
-    padding: 6px 10px !important;
+  header p {
+    display: none !important;
+  }
+
+  /* Tab strip */
+  .header-tabs {
+    margin-top: 8px !important;
+    padding-top: 6px !important;
+    gap: 6px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .header-tabs button {
+    font-size: 0.74rem !important;
+    padding: 6px 12px !important;
+    white-space: nowrap !important;
   }
 }
 
-/* Mobile: App Container */
+/* Mobile: App Container & Content Grid */
 @media (max-width: 640px) {
   .app-container {
-    padding: 10px 10px 80px 10px !important;
+    padding: 10px 12px calc(85px + env(safe-area-inset-bottom, 0px)) 12px !important;
   }
 
   .content-grid {
-    gap: 12px !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
   }
 
   /* Glass panels (filter toolbar) */
   .glass-panel {
-    padding: 10px 12px !important;
+    padding: 12px 14px !important;
+    gap: 10px !important;
   }
 
-  /* Fix filter toolbar wrapping on mobile */
-  .glass-panel > div {
-    flex-wrap: wrap !important;
+  /* Filter Toolbar Stack */
+  .filter-search-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
   }
 
-  /* Smaller search input */
-  .glass-panel input[type="text"] {
-    font-size: 0.8rem !important;
-    padding: 8px 10px 8px 34px !important;
-    min-width: 0 !important;
+  .filter-search-row input[type="text"] {
+    width: 100% !important;
+    font-size: 0.82rem !important;
+    padding: 9px 12px 9px 36px !important;
   }
 
-  /* Mobile buttons: smaller */
-  .btn-primary,
-  .btn-secondary {
-    padding: 7px 10px !important;
+  .filter-platform-pills {
+    display: flex !important;
+    width: 100% !important;
+    gap: 6px !important;
+  }
+
+  .filter-platform-pills button {
+    flex: 1 !important;
+    text-align: center !important;
+    padding: 7px 8px !important;
     font-size: 0.75rem !important;
   }
 
-  /* Hide long button text on mobile, show icons */
-  #btn-open-bulk span,
-  #btn-reset-real-data span,
-  #btn-lock-app span {
-    display: none;
+  .filter-selectors-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
   }
 
-  #btn-open-bulk,
-  #btn-reset-real-data,
-  #btn-lock-app {
-    padding: 8px !important;
+  .filter-selectors-row > div {
+    width: 100% !important;
+  }
+
+  .filter-selectors-row button {
+    width: 100% !important;
   }
 }
 
-/* Mobile: Modal full screen */
+/* Mobile: Modal full screen / bottom sheet */
 @media (max-width: 640px) {
   .modal-overlay {
     padding: 0 !important;
@@ -415,59 +502,97 @@ select option {
   }
 
   .modal-content {
-    max-height: 95vh !important;
-    border-radius: 16px 16px 0 0 !important;
+    max-height: 92vh !important;
+    height: 92vh !important;
+    border-radius: 20px 20px 0 0 !important;
     max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
-  /* Content detail modal scrollable panels */
-  .modal-content > div {
+  .modal-content form {
     padding: 14px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Modal header */
+  .modal-content > div:first-child {
+    padding: 14px 16px !important;
+    border-top-left-radius: 20px !important;
+    border-top-right-radius: 20px !important;
   }
 }
 
-/* Mobile: Cards */
-@media (max-width: 480px) {
-  /* Card images */
-  .content-grid img {
-    max-height: 180px !important;
+/* Mobile Bottom Navigation Bar */
+.mobile-bottom-bar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .mobile-bottom-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(58px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(10, 11, 18, 0.94);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 950;
+    align-items: center;
+    justify-content: space-around;
   }
 
-  /* Category pills scrollable */
-  .content-grid + div,
-  div[style*="overflowX"] {
-    -webkit-overflow-scrolling: touch;
+  .mobile-bottom-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    gap: 3px;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    position: relative;
   }
 
-  /* Stat metrics in cards */
-  .content-grid [style*="gap: 12px"] {
-    gap: 6px !important;
+  .mobile-bottom-tab.active {
+    color: #c084fc;
+  }
+
+  .mobile-bottom-tab.active svg {
+    color: #c084fc;
+    filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.6));
   }
 }
 
-/* Tablet landscape */
-@media (min-width: 641px) and (max-width: 1023px) {
-  .app-container {
-    padding: 16px 16px 60px 16px !important;
-  }
-}
-
-/* Touch-friendly: larger tap targets */
+/* Touch friendly & Smooth gestures */
 @media (hover: none) and (pointer: coarse) {
   button, a, input, select {
-    min-height: 40px;
+    min-height: 42px;
   }
   
-  /* Prevent double-tap zoom */
   button {
     touch-action: manipulation;
   }
 }
 
-/* Safe area for notched phones (iPhone etc.) */
+/* Safe area for notched phones */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .app-container {
-    padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: calc(85px + env(safe-area-inset-bottom)) !important;
   }
 }
+
 

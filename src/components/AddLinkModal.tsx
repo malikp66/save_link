@@ -228,7 +228,7 @@ export default function AddLinkModal({
           )}
 
           {/* Form Options (Category, Talent Type, Hook) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          <div className="grid-responsive-3">
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                 Kategori Niche:
@@ -267,7 +267,7 @@ export default function AddLinkModal({
           </div>
 
           {/* Rating & Outreach Status */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid-responsive-2">
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                 Rating Ketertarikan:
@@ -303,7 +303,7 @@ export default function AddLinkModal({
           </div>
 
           {/* Contact Details */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid-responsive-2">
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                 Nomor WA (Opsional):

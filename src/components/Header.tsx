@@ -51,36 +51,38 @@ export default function Header({
     }}>
       <div className="app-container" style={{ paddingBottom: 0, paddingTop: 0 }}>
         {/* Top bar: Brand & Main CTA buttons */}
-        <div style={{
+        <div className="header-top-bar" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: 16,
+          gap: 12,
         }}>
           {/* Logo & Status */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
-              width: 40,
-              height: 40,
-              borderRadius: 12,
+              width: 36,
+              height: 36,
+              borderRadius: 10,
               background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               boxShadow: '0 4px 16px rgba(139, 92, 246, 0.4)',
+              flexShrink: 0,
             }}>
-              <Sparkles size={22} color="#ffffff" />
+              <Sparkles size={20} color="#ffffff" />
             </div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <h1 style={{ 
-                  fontSize: '1.25rem', 
+                  fontSize: '1.2rem', 
                   fontWeight: 800, 
                   letterSpacing: '-0.02em',
                   background: 'linear-gradient(to right, #ffffff, #cbd5e1)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
+                  margin: 0,
                 }}>
                   TalentPulse
                 </h1>
@@ -88,29 +90,30 @@ export default function Header({
                   background: 'rgba(139, 92, 246, 0.15)',
                   color: '#c084fc',
                   border: '1px solid rgba(139, 92, 246, 0.3)',
-                  fontSize: '0.7rem'
+                  fontSize: '0.65rem',
+                  padding: '2px 6px',
                 }}>
                   PWA
                 </span>
               </div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                IG & TikTok Content Analyzer & Talent CRM
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0 }}>
+                IG & TikTok Intelligence & CRM
               </p>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {/* Quick Actions Toolbar */}
+          <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {/* Database indicator */}
             <div 
               title={isSupabaseConfigured ? "Terhubung ke Supabase Cloud DB" : "Penyimpanan Local-First (Offline Ready)"}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
+                gap: 5,
+                padding: '6px 10px',
                 borderRadius: 'var(--radius-full)',
-                fontSize: '0.72rem',
+                fontSize: '0.7rem',
                 fontWeight: 600,
                 background: isSupabaseConfigured ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
                 color: isSupabaseConfigured ? '#34d399' : '#fbbf24',
@@ -118,27 +121,29 @@ export default function Header({
               }}
             >
               <Database size={13} />
-              <span>{isSupabaseConfigured ? 'Cloud Sync' : 'Local-First'}</span>
+              <span className="desktop-only">{isSupabaseConfigured ? 'Cloud Sync' : 'Local-First'}</span>
             </div>
 
             <button
               onClick={onOpenCategoryModal}
               className="btn-secondary"
               id="btn-open-category"
-              style={{ padding: '8px 12px', fontSize: '0.8rem' }}
+              title="Kelola Kategori"
+              style={{ padding: '7px 10px', fontSize: '0.78rem' }}
             >
-              <Tag size={15} />
-              <span>Kategori</span>
+              <Tag size={14} />
+              <span className="desktop-only">Kategori</span>
             </button>
 
             <button
               onClick={onOpenBulkModal}
               className="btn-secondary"
               id="btn-open-bulk"
-              style={{ padding: '8px 14px', fontSize: '0.8rem', borderColor: 'rgba(6, 182, 212, 0.4)', color: '#22d3ee' }}
+              title="Import dari Notes"
+              style={{ padding: '7px 10px', fontSize: '0.78rem', borderColor: 'rgba(6, 182, 212, 0.4)', color: '#22d3ee' }}
             >
-              <FileText size={15} />
-              <span>Import dari Notes</span>
+              <FileText size={14} />
+              <span className="desktop-only">Import</span>
             </button>
 
             {onResetToRealData && (
@@ -148,17 +153,17 @@ export default function Header({
                 id="btn-reset-real-data"
                 title="Muat 176 link hasil kurasi notes Anda"
                 style={{ 
-                  padding: '8px 12px', 
-                  fontSize: '0.8rem', 
+                  padding: '7px 10px', 
+                  fontSize: '0.78rem', 
                   borderColor: 'rgba(236, 72, 153, 0.4)', 
                   color: '#f472b6',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6
+                  gap: 5
                 }}
               >
                 <RotateCcw size={14} />
-                <span>Muat 176 Link Notes</span>
+                <span className="desktop-only">176 Link</span>
               </button>
             )}
 
@@ -166,10 +171,11 @@ export default function Header({
               onClick={onOpenAddModal}
               className="btn-primary"
               id="btn-open-add"
-              style={{ padding: '8px 16px', fontSize: '0.82rem' }}
+              title="Simpan Link Baru"
+              style={{ padding: '7px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 5 }}
             >
-              <Plus size={16} />
-              <span>Simpan Link</span>
+              <Plus size={15} />
+              <span>Simpan</span>
             </button>
 
             {onLogout && (
@@ -179,29 +185,29 @@ export default function Header({
                 id="btn-lock-app"
                 title="Kunci Aplikasi / Logout"
                 style={{
-                  padding: '8px 12px',
-                  fontSize: '0.8rem',
+                  padding: '7px 10px',
+                  fontSize: '0.78rem',
                   borderColor: 'rgba(239, 68, 68, 0.4)',
                   color: '#fca5a5',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
+                  gap: 5,
                 }}
               >
                 <Lock size={14} />
-                <span>Kunci</span>
+                <span className="desktop-only">Kunci</span>
               </button>
             )}
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div style={{
+        <div className="header-tabs" style={{
           display: 'flex',
           gap: 8,
-          marginTop: 14,
+          marginTop: 12,
           borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-          paddingTop: 10,
+          paddingTop: 8,
           overflowX: 'auto',
         }}>
           <button

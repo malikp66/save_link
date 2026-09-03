@@ -176,11 +176,7 @@ export default function ContentDetailModal({
 
         {/* Modal Body */}
         <form onSubmit={handleSubmit} style={{ overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: 20,
-          }}>
+          <div className="detail-modal-grid">
             {/* Left Column: Visual Media & Creator Card */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Live Preview Switcher Tabs */}

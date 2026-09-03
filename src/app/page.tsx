@@ -59,7 +59,10 @@ import {
   Plus, 
   FileText, 
   Sparkles,
-  Inbox
+  Inbox,
+  LayoutGrid,
+  Users2,
+  BarChart3
 } from 'lucide-react';
 
 export default function Home() {
@@ -305,7 +308,7 @@ export default function Home() {
             {/* Search & Filter Toolbar */}
             <div className="glass-panel" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Search input + Platform quick pills */}
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div className="filter-search-row" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                 <div style={{
                   flex: 1,
                   minWidth: 260,
@@ -340,7 +343,7 @@ export default function Home() {
                 </div>
 
                 {/* Platform filter pills */}
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <div className="filter-platform-pills" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   <button
                     onClick={() => setPlatformFilter('all')}
                     style={{
@@ -483,7 +486,7 @@ export default function Home() {
                 </div>
 
                 {/* Sort & Status Selectors */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="filter-selectors-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <CustomSelect
                     value={statusFilter}
                     onChange={(val) => setStatusFilter(val)}
@@ -652,6 +655,45 @@ export default function Home() {
           }}
         />
       )}
+
+      {/* Mobile Fixed Bottom Navigation Bar */}
+      <nav className="mobile-bottom-bar" aria-label="Mobile Navigation">
+        <button
+          onClick={() => setActiveTab('feed')}
+          className={`mobile-bottom-tab ${activeTab === 'feed' ? 'active' : ''}`}
+          id="mobile-nav-feed"
+        >
+          <LayoutGrid size={19} />
+          <span>Feed</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('profiles')}
+          className={`mobile-bottom-tab ${activeTab === 'profiles' ? 'active' : ''}`}
+          id="mobile-nav-profiles"
+        >
+          <Users2 size={19} />
+          <span>Profil</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('analytics')}
+          className={`mobile-bottom-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+          id="mobile-nav-analytics"
+        >
+          <BarChart3 size={19} />
+          <span>Analisis</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('crm')}
+          className={`mobile-bottom-tab ${activeTab === 'crm' ? 'active' : ''}`}
+          id="mobile-nav-crm"
+        >
+          <SlidersHorizontal size={19} />
+          <span>Pipeline</span>
+        </button>
+      </nav>
     </div>
   );
 }
