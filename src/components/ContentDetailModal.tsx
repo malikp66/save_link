@@ -6,6 +6,7 @@ import {
   Category, 
   OutreachStatus 
 } from '@/types';
+import CustomSelect, { SelectOption } from './CustomSelect';
 import { 
   X, 
   ExternalLink, 
@@ -24,6 +25,27 @@ import {
   Save
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+
+const TALENT_TYPE_OPTIONS: SelectOption[] = [
+  { value: 'Chindo', label: 'Chindo', color: '#f472b6' },
+  { value: 'Lokal / Indo', label: 'Lokal / Indo', color: '#f59e0b' },
+  { value: 'Hijab / Muslimah', label: 'Hijab / Muslimah', color: '#10b981' },
+  { value: 'Fienshyt / Edgy', label: 'Fienshyt / Edgy', color: '#a855f7' },
+  { value: 'Bocil / Remaja', label: 'Bocil / Remaja', color: '#06b6d4' },
+  { value: 'Bule / Blasteran', label: 'Bule / Blasteran' },
+  { value: 'Korean Look', label: 'Korean Look' },
+  { value: 'Lainnya', label: 'Lainnya' },
+];
+
+const HOOK_TYPE_OPTIONS: SelectOption[] = [
+  { value: 'GRWM', label: 'GRWM' },
+  { value: 'Haul & Try-On', label: 'Haul & Try-On' },
+  { value: 'A Day in Life', label: 'A Day in Life' },
+  { value: 'Dance / Trend', label: 'Dance / Trend' },
+  { value: 'Tutorial / Tips', label: 'Tutorial' },
+  { value: 'POV & Comedy', label: 'POV / Comedy' },
+  { value: 'Aesthetic Vibe', label: 'Aesthetic' },
+];
 
 interface ContentDetailModalProps {
   item: SavedLink;
@@ -365,80 +387,39 @@ export default function ContentDetailModal({
                   <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                     Kategori Niche:
                   </label>
-                  <select
+                  <CustomSelect
                     value={formData.category_id}
-                    onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'var(--bg-card-solid)',
-                      border: '1px solid var(--border-subtle)',
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    <option value="">-- Pilih --</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, category_id: val })}
+                    options={categories.map((c) => ({ value: c.id, label: c.name, color: c.color }))}
+                    placeholder="Pilih Kategori"
+                    size="sm"
+                  />
                 </div>
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#f472b6', marginBottom: 6 }}>
                     Tipe / Persona Cewe:
                   </label>
-                  <select
+                  <CustomSelect
                     value={formData.talent_type}
-                    onChange={(e) => setFormData({ ...formData, talent_type: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'var(--bg-card-solid)',
-                      border: '1px solid rgba(236, 72, 153, 0.4)',
-                      color: '#f472b6',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                    }}
-                  >
-                    <option value="Chindo">Chindo</option>
-                    <option value="Lokal / Indo">Lokal / Indo</option>
-                    <option value="Hijab / Muslimah">Hijab / Muslimah</option>
-                    <option value="Fienshyt / Edgy">Fienshyt / Edgy</option>
-                    <option value="Bocil / Remaja">Bocil / Remaja</option>
-                    <option value="Bule / Blasteran">Bule / Blasteran</option>
-                    <option value="Korean Look">Korean Look</option>
-                    <option value="Lainnya">Lainnya</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, talent_type: val })}
+                    options={TALENT_TYPE_OPTIONS}
+                    placeholder="Pilih Tipe Cewe"
+                    size="sm"
+                  />
                 </div>
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                     Format / Hook:
                   </label>
-                  <select
+                  <CustomSelect
                     value={formData.hook_type}
-                    onChange={(e) => setFormData({ ...formData, hook_type: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'var(--bg-card-solid)',
-                      border: '1px solid var(--border-subtle)',
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    <option value="GRWM">GRWM</option>
-                    <option value="Haul & Try-On">Haul & Try-On</option>
-                    <option value="A Day in Life">A Day in Life</option>
-                    <option value="Dance / Trend">Dance / Trend</option>
-                    <option value="Tutorial / Tips">Tutorial</option>
-                    <option value="POV & Comedy">POV / Comedy</option>
-                    <option value="Aesthetic Vibe">Aesthetic</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, hook_type: val })}
+                    options={HOOK_TYPE_OPTIONS}
+                    placeholder="Pilih Hook"
+                    size="sm"
+                  />
                 </div>
               </div>
 

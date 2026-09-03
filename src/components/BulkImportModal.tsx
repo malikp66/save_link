@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Category, SavedLink } from '@/types';
 import { extractUrlsFromNotes, detectPlatform } from '@/lib/linkParser';
+import CustomSelect from './CustomSelect';
 import { X, FileText, Loader2, CheckCircle2, Sparkles, Layers } from 'lucide-react';
 
 interface BulkImportModalProps {
@@ -205,28 +206,16 @@ export default function BulkImportModal({
             </div>
 
             {/* Category Selector for bulk */}
-            <div>
+            <div style={{ minWidth: 160 }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
                 Tetapkan Kategori:
               </span>
-              <select
+              <CustomSelect
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                disabled={isProcessing}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  background: 'var(--bg-modal)',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: '0.78rem',
-                }}
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedCategory(val)}
+                options={categories.map((c) => ({ value: c.id, label: c.name, color: c.color }))}
+                size="sm"
+              />
             </div>
           </div>
 

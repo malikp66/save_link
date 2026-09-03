@@ -6,6 +6,7 @@ import {
   Category, 
   OutreachStatus 
 } from '@/types';
+import CustomSelect, { SelectOption } from './CustomSelect';
 import { 
   Heart, 
   Eye, 
@@ -18,6 +19,15 @@ import {
   Trash2,
   TrendingUp
 } from 'lucide-react';
+
+const OUTREACH_OPTIONS: SelectOption[] = [
+  { value: 'saved', label: 'Tersimpan', icon: '📥', color: '#cbd5e1' },
+  { value: 'shortlisted', label: 'Tertarik', icon: '⭐', color: '#fbbf24' },
+  { value: 'contacted', label: 'Sudah di-DM', icon: '💬', color: '#c084fc' },
+  { value: 'in_discussion', label: 'Diskusi', icon: '🤝', color: '#38bdf8' },
+  { value: 'collaborated', label: 'Deal/Collab', icon: '🎉', color: '#34d399' },
+  { value: 'archived', label: 'Lewat', icon: '⚪', color: '#94a3b8' },
+];
 
 interface ContentCardProps {
   item: SavedLink;
@@ -314,30 +324,14 @@ export default function ContentCard({
           paddingTop: 8,
           borderTop: '1px solid rgba(255, 255, 255, 0.05)',
         }}>
-          {/* Status Dropdown */}
-          <select
+          {/* Status Custom Dropdown */}
+          <CustomSelect
             value={item.outreach_status}
-            onChange={(e) => onUpdateStatus(item.id, e.target.value as OutreachStatus)}
-            style={{
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              padding: '4px 8px',
-              borderRadius: 'var(--radius-sm)',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid var(--border-subtle)',
-              color: 'var(--text-main)',
-              cursor: 'pointer',
-              outline: 'none',
-              maxWidth: '140px',
-            }}
-          >
-            <option value="saved">📥 Tersimpan</option>
-            <option value="shortlisted">⭐ Tertarik</option>
-            <option value="contacted">💬 Sudah di-DM</option>
-            <option value="in_discussion">🤝 Sedang Diskusi</option>
-            <option value="collaborated">🎉 Deal / Collab</option>
-            <option value="archived">⚪ Lewat</option>
-          </select>
+            onChange={(val) => onUpdateStatus(item.id, val as OutreachStatus)}
+            options={OUTREACH_OPTIONS}
+            size="sm"
+            width={130}
+          />
 
           {/* Action buttons: DM & Delete */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>

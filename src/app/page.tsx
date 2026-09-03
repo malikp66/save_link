@@ -10,12 +10,29 @@ import CategoryManagerModal from '@/components/CategoryManagerModal';
 import AnalyticsView from '@/components/AnalyticsView';
 import OutreachCrmView from '@/components/OutreachCrmView';
 import SupabaseAlertBanner from '@/components/SupabaseAlertBanner';
+import CustomSelect, { SelectOption } from '@/components/CustomSelect';
 import { 
   SavedLink, 
   Category, 
   OutreachStatus, 
   Platform 
 } from '@/types';
+
+const STATUS_FILTER_OPTIONS: SelectOption[] = [
+  { value: 'all', label: 'Semua Status CRM' },
+  { value: 'saved', label: 'Tersimpan', icon: '📥' },
+  { value: 'shortlisted', label: 'Tertarik', icon: '⭐' },
+  { value: 'contacted', label: 'Sudah di-DM', icon: '💬' },
+  { value: 'in_discussion', label: 'Sedang Diskusi', icon: '🤝' },
+  { value: 'collaborated', label: 'Deal / Collab', icon: '🎉' },
+];
+
+const SORT_OPTIONS: SelectOption[] = [
+  { value: 'newest', label: 'Terbaru Ditambahkan' },
+  { value: 'highest_er', label: 'ER Tertinggi' },
+  { value: 'highest_views', label: 'Views Tertinggi' },
+  { value: 'rating', label: 'Rating Tertinggi' },
+];
 import { 
   fetchCategories, 
   createCategory, 
@@ -395,43 +412,21 @@ export default function Home() {
 
                 {/* Sort & Status Selectors */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <select
+                  <CustomSelect
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      padding: '5px 10px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid var(--border-subtle)',
-                    }}
-                  >
-                    <option value="all">Semua Status CRM</option>
-                    <option value="saved">Tersimpan</option>
-                    <option value="shortlisted">Tertarik / Prioritas</option>
-                    <option value="contacted">Sudah di-DM</option>
-                    <option value="in_discussion">Sedang Diskusi</option>
-                    <option value="collaborated">Deal / Collab</option>
-                  </select>
+                    onChange={(val) => setStatusFilter(val)}
+                    options={STATUS_FILTER_OPTIONS}
+                    size="sm"
+                    width={160}
+                  />
 
-                  <select
+                  <CustomSelect
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      padding: '5px 10px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid var(--border-subtle)',
-                    }}
-                  >
-                    <option value="newest">Terbaru Ditambahkan</option>
-                    <option value="highest_er">Engagement Rate Tertinggi</option>
-                    <option value="highest_views">Views Tertinggi</option>
-                    <option value="rating">Rating Bintang Tertinggi</option>
-                  </select>
+                    onChange={(val) => setSortBy(val as any)}
+                    options={SORT_OPTIONS}
+                    size="sm"
+                    width={165}
+                  />
                 </div>
               </div>
             </div>

@@ -44,6 +44,7 @@ html, body {
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
 }
 
 /* Scrollbars */
@@ -77,6 +78,13 @@ button {
 input, textarea, select {
   font-family: inherit;
   color: inherit;
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #151828 !important;
+  color: #f8fafc !important;
+  padding: 8px 12px;
 }
 
 /* Glassmorphism Classes */

@@ -2,7 +2,34 @@
 
 import React, { useState } from 'react';
 import { Category, SavedLink, OutreachStatus, ParsedLinkData } from '@/types';
+import CustomSelect, { SelectOption } from './CustomSelect';
 import { X, Link2, Loader2, Sparkles, Plus, Star } from 'lucide-react';
+
+const TALENT_TYPE_OPTIONS: SelectOption[] = [
+  { value: 'Chindo', label: 'Chindo', color: '#f472b6' },
+  { value: 'Lokal / Indo', label: 'Lokal / Indo', color: '#f59e0b' },
+  { value: 'Hijab / Muslimah', label: 'Hijab / Muslimah', color: '#10b981' },
+  { value: 'Fienshyt / Edgy', label: 'Fienshyt / Edgy', color: '#a855f7' },
+  { value: 'Bocil / Remaja', label: 'Bocil / Remaja', color: '#06b6d4' },
+  { value: 'Bule / Blasteran', label: 'Bule / Blasteran' },
+  { value: 'Korean Look', label: 'Korean Look' },
+  { value: 'Lainnya', label: 'Lainnya' },
+];
+
+const HOOK_TYPE_OPTIONS: SelectOption[] = [
+  { value: 'GRWM', label: 'GRWM' },
+  { value: 'Haul & Try-On', label: 'Haul & Try-On' },
+  { value: 'A Day in Life', label: 'A Day in Life' },
+  { value: 'Dance / Trend', label: 'Dance / Trend' },
+  { value: 'Tutorial / Tips', label: 'Tutorial' },
+  { value: 'POV & Comedy', label: 'POV / Comedy' },
+];
+
+const ADD_OUTREACH_OPTIONS: SelectOption[] = [
+  { value: 'saved', label: 'Simpan Saja', icon: '📥' },
+  { value: 'shortlisted', label: 'Masuk Shortlist', icon: '⭐', color: '#fbbf24' },
+  { value: 'contacted', label: 'Sudah Di-DM', icon: '💬', color: '#c084fc' },
+];
 
 interface AddLinkModalProps {
   categories: Category[];
@@ -206,78 +233,36 @@ export default function AddLinkModal({
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                 Kategori Niche:
               </label>
-              <select
+              <CustomSelect
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '9px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  background: 'var(--bg-card-solid)',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: '0.8rem',
-                }}
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedCategory(val)}
+                options={categories.map((c) => ({ value: c.id, label: c.name, color: c.color }))}
+                placeholder="Pilih Kategori"
+              />
             </div>
 
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#f472b6', marginBottom: 6 }}>
                 Tipe / Persona Cewe:
               </label>
-              <select
+              <CustomSelect
                 value={talentType}
-                onChange={(e) => setTalentType(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '9px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  background: 'var(--bg-card-solid)',
-                  border: '1px solid rgba(236, 72, 153, 0.4)',
-                  color: '#f472b6',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                }}
-              >
-                <option value="Chindo">Chindo</option>
-                <option value="Lokal / Indo">Lokal / Indo</option>
-                <option value="Hijab / Muslimah">Hijab / Muslimah</option>
-                <option value="Fienshyt / Edgy">Fienshyt / Edgy</option>
-                <option value="Bocil / Remaja">Bocil / Remaja</option>
-                <option value="Bule / Blasteran">Bule / Blasteran</option>
-                <option value="Korean Look">Korean Look</option>
-                <option value="Lainnya">Lainnya</option>
-              </select>
+                onChange={(val) => setTalentType(val)}
+                options={TALENT_TYPE_OPTIONS}
+                placeholder="Pilih Tipe Cewe"
+              />
             </div>
 
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                 Format / Hook:
               </label>
-              <select
+              <CustomSelect
                 value={hookType}
-                onChange={(e) => setHookType(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '9px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  background: 'var(--bg-card-solid)',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: '0.8rem',
-                }}
-              >
-                <option value="GRWM">GRWM</option>
-                <option value="Haul & Try-On">Haul & Try-On</option>
-                <option value="A Day in Life">A Day in Life</option>
-                <option value="Dance / Trend">Dance / Trend</option>
-                <option value="Tutorial / Tips">Tutorial</option>
-                <option value="POV & Comedy">POV / Comedy</option>
-              </select>
+                onChange={(val) => setHookType(val)}
+                options={HOOK_TYPE_OPTIONS}
+                placeholder="Pilih Hook"
+              />
             </div>
           </div>
 
@@ -287,7 +272,7 @@ export default function AddLinkModal({
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                 Rating Ketertarikan:
               </label>
-              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 4, alignItems: 'center', height: 40 }}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
@@ -309,22 +294,11 @@ export default function AddLinkModal({
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                 Status Outreach:
               </label>
-              <select
+              <CustomSelect
                 value={outreachStatus}
-                onChange={(e) => setOutreachStatus(e.target.value as OutreachStatus)}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  background: 'var(--bg-card-solid)',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: '0.82rem',
-                }}
-              >
-                <option value="saved">📥 Simpan Saja</option>
-                <option value="shortlisted">⭐ Masuk Shortlist (Prioritas)</option>
-                <option value="contacted">💬 Sudah Di-DM</option>
-              </select>
+                onChange={(val) => setOutreachStatus(val as OutreachStatus)}
+                options={ADD_OUTREACH_OPTIONS}
+              />
             </div>
           </div>
 
