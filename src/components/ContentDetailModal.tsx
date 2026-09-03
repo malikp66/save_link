@@ -189,6 +189,7 @@ export default function ContentDetailModal({
                 <img 
                   src={item.thumbnail_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'} 
                   alt={item.title}
+                  referrerPolicy="no-referrer"
                   style={{
                     width: '100%',
                     height: 280,

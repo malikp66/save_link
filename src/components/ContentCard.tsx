@@ -92,6 +92,7 @@ export default function ContentCard({
           <img 
             src={item.thumbnail_url} 
             alt={item.title || 'Preview konten'} 
+            referrerPolicy="no-referrer"
             style={{
               position: 'absolute',
               top: 0,
@@ -188,6 +189,7 @@ export default function ContentCard({
             <img 
               src={item.author_avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${item.author_username}`} 
               alt={item.author_name}
+              referrerPolicy="no-referrer"
               style={{
                 width: 32,
                 height: 32,

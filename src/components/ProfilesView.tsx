@@ -383,6 +383,7 @@ export default function ProfilesView({
                   <img
                     src={profile.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${profile.username}`}
                     alt={profile.name}
+                    referrerPolicy="no-referrer"
                     style={{
                       width: 52,
                       height: 52,
@@ -501,6 +502,7 @@ export default function ProfilesView({
                         <img
                           src={it.thumbnail_url}
                           alt={it.title}
+                          referrerPolicy="no-referrer"
                           style={{
                             width: '100%',
                             height: '100%',

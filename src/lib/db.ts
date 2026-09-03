@@ -89,8 +89,8 @@ export async function checkSupabaseStatus(): Promise<SupabaseStatusResult> {
   }
 }
 
-const LOCAL_STORAGE_KEY_CATEGORIES = 'talentpulse_categories_v1';
-const LOCAL_STORAGE_KEY_LINKS = 'talentpulse_saved_links_v1';
+const LOCAL_STORAGE_KEY_CATEGORIES = 'talentpulse_categories_v2';
+const LOCAL_STORAGE_KEY_LINKS = 'talentpulse_saved_links_v2';
 
 // Helpers for Local Storage
 function getLocalCategories(): Category[] {
@@ -98,6 +98,7 @@ function getLocalCategories(): Category[] {
   try {
     const data = localStorage.getItem(LOCAL_STORAGE_KEY_CATEGORIES);
     if (!data) {
+      localStorage.removeItem('talentpulse_categories_v1');
       localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(INITIAL_CATEGORIES));
       return INITIAL_CATEGORIES;
     }
@@ -123,15 +124,11 @@ function getLocalLinks(): SavedLink[] {
   try {
     const data = localStorage.getItem(LOCAL_STORAGE_KEY_LINKS);
     if (!data) {
+      localStorage.removeItem('talentpulse_saved_links_v1');
       localStorage.setItem(LOCAL_STORAGE_KEY_LINKS, JSON.stringify(INITIAL_LINKS));
       return INITIAL_LINKS;
     }
     const parsed = JSON.parse(data);
-    // Automatically upgrade if user has the old 4 dummy links or empty
-    if (Array.isArray(parsed) && parsed.length <= 4) {
-      localStorage.setItem(LOCAL_STORAGE_KEY_LINKS, JSON.stringify(INITIAL_LINKS));
-      return INITIAL_LINKS;
-    }
     return parsed;
   } catch (e) {
     console.error('Error reading links from localStorage:', e);
@@ -141,6 +138,8 @@ function getLocalLinks(): SavedLink[] {
 
 export function resetToRealUserLinks(): SavedLink[] {
   if (typeof window !== 'undefined') {
+    localStorage.removeItem('talentpulse_saved_links_v1');
+    localStorage.removeItem('talentpulse_categories_v1');
     localStorage.setItem(LOCAL_STORAGE_KEY_LINKS, JSON.stringify(INITIAL_LINKS));
     localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(INITIAL_CATEGORIES));
   }

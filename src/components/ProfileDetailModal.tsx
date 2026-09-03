@@ -187,6 +187,7 @@ export default function ProfileDetailModal({
                 <img
                   src={profile.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${profile.username}`}
                   alt={profile.name}
+                  referrerPolicy="no-referrer"
                   style={{
                     width: 72,
                     height: 72,
@@ -398,6 +399,7 @@ export default function ProfileDetailModal({
                       <img
                         src={item.thumbnail_url}
                         alt={item.title}
+                        referrerPolicy="no-referrer"
                         style={{
                           position: 'absolute',
                           top: 0,
