@@ -236,8 +236,11 @@ select option {
 /* Layout Utilities */
 .app-container {
   max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
   padding: 16px 20px 90px 20px;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 @media (min-width: 1024px) {
@@ -249,25 +252,126 @@ select option {
 /* Masonry / Responsive Grid */
 .content-grid {
   display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 20px;
+  grid-template-columns: 100%;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @media (min-width: 640px) {
   .content-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
   }
 }
 
 @media (min-width: 1024px) {
   .content-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
   }
 }
 
 @media (min-width: 1280px) {
   .content-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+/* Base Filter Toolbar Styles */
+.filter-search-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .filter-search-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+.filter-platform-pills {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .filter-platform-pills {
+    display: flex;
+    width: auto;
+    flex-shrink: 0;
+  }
+}
+
+.filter-platform-pills button {
+  width: 100%;
+  text-align: center;
+  padding: 8px 6px;
+  font-size: 0.76rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .filter-platform-pills button {
+    width: auto;
+    padding: 7px 14px;
+    font-size: 0.78rem;
+  }
+}
+
+.filter-scroll-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 10px;
+  overflow: hidden;
+}
+
+.filter-pill-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.filter-pill-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-selectors-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 10px;
+}
+
+@media (min-width: 768px) {
+  .filter-selectors-grid {
+    display: flex;
+    align-items: center;
+    width: auto;
+    margin-left: auto;
+    border-top: none;
+    padding-top: 0;
   }
 }
 
