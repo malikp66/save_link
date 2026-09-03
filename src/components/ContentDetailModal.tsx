@@ -52,6 +52,8 @@ interface ContentDetailModalProps {
   categories: Category[];
   onClose: () => void;
   onSave: (id: string, updates: Partial<SavedLink>) => void;
+  onDelete: (id: string) => void;
+  onOpenCreatorProfile?: (username: string) => void;
 }
 
 export default function ContentDetailModal({
@@ -59,6 +61,8 @@ export default function ContentDetailModal({
   categories,
   onClose,
   onSave,
+  onDelete,
+  onOpenCreatorProfile,
 }: ContentDetailModalProps) {
   const [formData, setFormData] = useState({
     title: item.title || '',
@@ -77,6 +81,7 @@ export default function ContentDetailModal({
   });
 
   const [isSavedAlert, setIsSavedAlert] = useState(false);
+  const [previewMode, setPreviewMode] = useState<'embed' | 'photo'>('embed');
 
   // Recalculate engagement rate
   const calcER = (likes: number, comments: number, shares: number, views: number) => {
@@ -178,86 +183,254 @@ export default function ContentDetailModal({
           }}>
             {/* Left Column: Visual Media & Creator Card */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Media Preview / Embed */}
+              {/* Live Preview Switcher Tabs */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode('embed')}
+                    style={{
+                      padding: '5px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      background: previewMode === 'embed' ? 'rgba(139, 92, 246, 0.25)' : 'rgba(255, 255, 255, 0.04)',
+                      color: previewMode === 'embed' ? '#c084fc' : 'var(--text-muted)',
+                      border: previewMode === 'embed' ? '1px solid rgba(139, 92, 246, 0.4)' : '1px solid var(--border-subtle)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <span>🎬 Live Video Player</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode('photo')}
+                    style={{
+                      padding: '5px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      background: previewMode === 'photo' ? 'rgba(139, 92, 246, 0.25)' : 'rgba(255, 255, 255, 0.04)',
+                      color: previewMode === 'photo' ? '#c084fc' : 'var(--text-muted)',
+                      border: previewMode === 'photo' ? '1px solid rgba(139, 92, 246, 0.4)' : '1px solid var(--border-subtle)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <span>🖼️ Foto Thumbnail</span>
+                  </button>
+                </div>
+
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    fontSize: '0.72rem',
+                    color: 'var(--accent-cyan)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    fontWeight: 600,
+                  }}
+                >
+                  <ExternalLink size={12} />
+                  <span>Buka di {item.platform}</span>
+                </a>
+              </div>
+
+              {/* Media Preview / Embed Player */}
               <div style={{
                 position: 'relative',
                 borderRadius: 'var(--radius-md)',
                 overflow: 'hidden',
-                background: '#0e111a',
+                background: '#0a0d18',
                 border: '1px solid var(--border-subtle)',
+                minHeight: 280,
               }}>
-                <img 
-                  src={item.thumbnail_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'} 
-                  alt={item.title}
-                  referrerPolicy="no-referrer"
-                  style={{
-                    width: '100%',
-                    height: 280,
-                    objectFit: 'cover',
-                  }}
-                />
-                <div style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(10, 11, 18, 0.95), transparent)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'flex-end',
-                  padding: 14,
-                }}>
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn-secondary"
-                    style={{
-                      padding: '8px 12px',
-                      fontSize: '0.8rem',
-                      alignSelf: 'flex-start',
-                      background: 'rgba(0, 0, 0, 0.6)',
-                      backdropFilter: 'blur(8px)',
-                    }}
-                  >
-                    <ExternalLink size={14} />
-                    <span>Buka Link Asli ({item.platform})</span>
-                  </a>
-                </div>
+                {previewMode === 'embed' ? (
+                  item.platform === 'instagram' ? (
+                    <iframe 
+                      src={`https://www.instagram.com/p/${item.url.match(/\/(?:p|reel)\/([A-Za-z0-9_-]+)/)?.[1] || ''}/embed/captioned/`}
+                      style={{
+                        width: '100%',
+                        height: 480,
+                        border: 'none',
+                        background: '#0e111a',
+                      }}
+                      allowFullScreen
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, minHeight: 320, background: '#0e111a', gap: 12 }}>
+                      <img 
+                        src={item.thumbnail_url || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80'} 
+                        alt={item.title}
+                        referrerPolicy="no-referrer"
+                        style={{ width: '100%', maxHeight: 280, objectFit: 'contain', borderRadius: 'var(--radius-sm)' }}
+                      />
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-primary"
+                        style={{
+                          padding: '8px 16px',
+                          fontSize: '0.8rem',
+                          background: '#06b6d4',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <ExternalLink size={14} />
+                        <span>Putar Video Lengkap di TikTok Asli ➔</span>
+                      </a>
+                    </div>
+                  )
+                ) : (
+                  <div style={{ position: 'relative', width: '100%', height: 280 }}>
+                    <img 
+                      src={item.thumbnail_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'} 
+                      alt={item.title}
+                      referrerPolicy="no-referrer"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* Creator Card & Touch-Up Actions */}
-              <div className="glass-panel" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {/* PANEL TELAAH AKUN & CREATOR INTELLIGENCE */}
+              <div className="glass-panel" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                  paddingBottom: 10,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      padding: '2px 7px',
+                      borderRadius: 4,
+                      background: 'rgba(236, 72, 153, 0.2)',
+                      color: '#f472b6',
+                    }}>
+                      🔍 TELAAH AKUN
+                    </span>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      Pemilik Konten Terverifikasi
+                    </span>
+                  </div>
+
+                  <span style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    color: 'var(--text-muted)',
+                  }}>
+                    {item.platform === 'instagram' ? 'Instagram Reel/Post' : 'TikTok Video'}
+                  </span>
+                </div>
+
+                {/* Creator Header with Avatar & Details */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <img 
                       src={item.author_avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${item.author_username}`}
                       alt={item.author_name}
-                      style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }}
+                      referrerPolicy="no-referrer"
+                      style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '1px solid #8b5cf6' }}
                     />
                     <div>
-                      <h4 style={{ fontSize: '0.95rem', fontWeight: 700 }}>{item.author_name}</h4>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>@{item.author_username}</p>
+                      <h4 style={{ fontSize: '0.98rem', fontWeight: 800, margin: 0 }}>{item.author_name}</h4>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--primary)', margin: 0 }}>@{item.author_username}</p>
                     </div>
                   </div>
 
-                  <a 
-                    href={item.author_profile_url || item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: 'var(--radius-md)',
-                      background: 'rgba(139, 92, 246, 0.15)',
-                      color: '#c084fc',
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4
-                    }}
-                  >
-                    <Send size={13} />
-                    <span>Kirim DM</span>
-                  </a>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {onOpenCreatorProfile && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenCreatorProfile(item.author_username);
+                        }}
+                        className="btn-secondary"
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          color: '#f472b6',
+                          borderColor: 'rgba(236, 72, 153, 0.4)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 5,
+                        }}
+                      >
+                        <span>Telaah Akun Ini ➔</span>
+                      </button>
+                    )}
+                    <a 
+                      href={item.author_profile_url || item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'rgba(139, 92, 246, 0.15)',
+                        color: '#c084fc',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}
+                    >
+                      <Send size={13} />
+                      <span>Kirim DM</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* In-depth content analysis highlights */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 8,
+                  padding: '10px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'rgba(255, 255, 255, 0.025)',
+                  fontSize: '0.74rem',
+                }}>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', display: 'block' }}>Indeks Potensi Viral:</span>
+                    <span style={{ fontWeight: 700, color: item.engagement_rate > 9 ? '#34d399' : '#fbbf24' }}>
+                      {item.engagement_rate > 9 ? '🚀 Sangat Tinggi / Viral' : item.engagement_rate >= 6 ? '🔥 Performa Sehat' : '👍 Standar'} ({item.engagement_rate}% ER)
+                    </span>
+                  </div>
+
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', display: 'block' }}>Format Hook / Gaya:</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>
+                      {formData.hook_type} ({formData.talent_type})
+                    </span>
+                  </div>
+
+                  <div style={{ gridColumn: 'span 2', borderTop: '1px solid rgba(255, 255, 255, 0.04)', paddingTop: 6 }}>
+                    <span style={{ color: 'var(--text-muted)', display: 'block' }}>Audio / Sound:</span>
+                    <span style={{ color: '#cbd5e1', fontWeight: 600 }}>
+                      🎵 {item.audio_title || 'Original Audio'} - {item.audio_author || item.author_name}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Direct Touch-Up Channels */}

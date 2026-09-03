@@ -509,6 +509,10 @@ export default function Home() {
                       onOpenDetail={(item) => setSelectedDetailItem(item)}
                       onUpdateStatus={handleUpdateStatus}
                       onDelete={handleDeleteLink}
+                      onOpenCreatorProfile={(username) => {
+                        const prof = creatorProfiles.find(p => p.username.toLowerCase() === username.toLowerCase());
+                        if (prof) setSelectedProfile(prof);
+                      }}
                     />
                   );
                 })}
@@ -592,6 +596,11 @@ export default function Home() {
           categories={categories}
           onClose={() => setSelectedDetailItem(null)}
           onSave={handleUpdateLink}
+          onDelete={handleDeleteLink}
+          onOpenCreatorProfile={(username) => {
+            const prof = creatorProfiles.find(p => p.username.toLowerCase() === username.toLowerCase());
+            if (prof) setSelectedProfile(prof);
+          }}
         />
       )}
     </div>

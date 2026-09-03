@@ -35,6 +35,7 @@ interface ContentCardProps {
   onOpenDetail: (item: SavedLink) => void;
   onUpdateStatus: (id: string, status: OutreachStatus) => void;
   onDelete: (id: string) => void;
+  onOpenCreatorProfile?: (username: string) => void;
 }
 
 const STATUS_LABELS: Record<OutreachStatus, { label: string; className: string }> = {
@@ -52,6 +53,7 @@ export default function ContentCard({
   onOpenDetail,
   onUpdateStatus,
   onDelete,
+  onOpenCreatorProfile,
 }: ContentCardProps) {
   const isTiktok = item.platform === 'tiktok';
 
@@ -230,6 +232,53 @@ export default function ContentCard({
               <Star size={13} fill="#fbbf24" color="#fbbf24" />
               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#fbbf24' }}>{item.rating}</span>
             </div>
+          )}
+        </div>
+
+        {/* Link Type Badge & Telaah Akun Button */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, margin: '2px 0' }}>
+          <span style={{
+            fontSize: '0.66rem',
+            padding: '2px 6px',
+            borderRadius: 4,
+            fontWeight: 600,
+            background: item.url.includes('/p/') || item.url.includes('/reel/') || item.url.includes('tiktok') 
+              ? 'rgba(6, 182, 212, 0.15)' 
+              : 'rgba(168, 85, 247, 0.15)',
+            color: item.url.includes('/p/') || item.url.includes('/reel/') || item.url.includes('tiktok') 
+              ? '#22d3ee' 
+              : '#c084fc',
+            border: item.url.includes('/p/') || item.url.includes('/reel/') || item.url.includes('tiktok') 
+              ? '1px solid rgba(6, 182, 212, 0.3)' 
+              : '1px solid rgba(168, 85, 247, 0.3)',
+          }}>
+            {item.url.includes('/p/') || item.url.includes('/reel/') || item.url.includes('tiktok') ? '🎬 Link Konten Video' : '👤 Link Akun Profil'}
+          </span>
+
+          {onOpenCreatorProfile && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenCreatorProfile(item.author_username);
+              }}
+              style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                color: '#f472b6',
+                background: 'rgba(236, 72, 153, 0.12)',
+                border: '1px solid rgba(236, 72, 153, 0.3)',
+                padding: '2px 7px',
+                borderRadius: 4,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 3,
+              }}
+              title={`Telaah Akun @${item.author_username}`}
+            >
+              <span>🔍 Telaah Akun</span>
+            </button>
           )}
         </div>
 
