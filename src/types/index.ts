@@ -22,7 +22,7 @@ export interface SavedLink {
   id: string;
   platform: Platform;
   url: string;
-  media_type: 'reel' | 'post' | 'video' | 'story';
+  media_type: 'reel' | 'post' | 'video' | 'story' | 'profile';
   author_username: string;
   author_name: string;
   author_avatar_url?: string;
@@ -55,7 +55,7 @@ export interface SavedLink {
 export interface ParsedLinkData {
   platform: Platform;
   url: string;
-  media_type: 'reel' | 'post' | 'video' | 'story';
+  media_type: 'reel' | 'post' | 'video' | 'story' | 'profile';
   author_username: string;
   author_name: string;
   author_avatar_url: string;

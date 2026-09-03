@@ -156,8 +156,12 @@ async function parseTikTok(rawUrl: string, cleanUrl: string): Promise<ParsedLink
 
 async function parseInstagram(rawUrl: string, cleanUrl: string): Promise<ParsedLinkData> {
   const isReel = cleanUrl.includes('/reel/') || cleanUrl.includes('/reels/');
+  const isPost = cleanUrl.includes('/p/');
   const shortcodeMatch = cleanUrl.match(/\/(?:reel|reels|p)\/([A-Za-z0-9_-]+)/);
-  const shortcode = shortcodeMatch ? shortcodeMatch[1] : 'post';
+  const shortcode = shortcodeMatch ? shortcodeMatch[1] : '';
+
+  // Detect if this is a PROFILE link (not a post/reel)
+  const isProfileLink = !isReel && !isPost && !shortcode;
 
   let username = 'ig_creator';
   const usernameMatch = rawUrl.match(/instagram\.com\/([^/?#]+)/);
@@ -165,12 +169,17 @@ async function parseInstagram(rawUrl: string, cleanUrl: string): Promise<ParsedL
     username = usernameMatch[1];
   }
 
-  // Try scraping OpenGraph metadata
+  // Try scraping OpenGraph metadata from Instagram
   try {
-    const res = await fetch(cleanUrl, {
+    const fetchUrl = isProfileLink 
+      ? `https://www.instagram.com/${username}/`
+      : cleanUrl;
+
+    const res = await fetch(fetchUrl, {
       headers: {
         'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
       },
+      signal: AbortSignal.timeout(6000),
     });
 
     if (res.ok) {
@@ -179,27 +188,112 @@ async function parseInstagram(rawUrl: string, cleanUrl: string): Promise<ParsedL
       const descMatch = html.match(/<meta property="og:description" content="([^"]+)"/i);
       const imageMatch = html.match(/<meta property="og:image" content="([^"]+)"/i);
 
-      const title = descMatch ? descMatch[1] : titleMatch ? titleMatch[1] : 'Instagram Content';
-      const thumbnail = imageMatch ? imageMatch[1] : '';
+      const ogTitle = titleMatch ? decodeHtmlEntities(titleMatch[1]) : '';
+      const ogDesc = descMatch ? decodeHtmlEntities(descMatch[1]) : '';
+      const ogImage = imageMatch ? imageMatch[1] : '';
 
-      return {
-        platform: 'instagram',
-        url: cleanUrl,
-        media_type: isReel ? 'reel' : 'post',
-        author_username: username,
-        author_name: username.replace(/_/g, ' '),
-        author_avatar_url: `https://api.dicebear.com/7.x/personas/svg?seed=${username}`,
-        author_profile_url: `https://www.instagram.com/${username}/`,
-        title: title || 'Instagram Reel Content',
-        thumbnail_url: thumbnail || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
-        audio_title: 'Original Audio',
-        audio_author: username,
-        hashtags: extractHashtags(title),
-        views_count: Math.floor(Math.random() * 250000) + 30000,
-        likes_count: Math.floor(Math.random() * 25000) + 2000,
-        comments_count: Math.floor(Math.random() * 800) + 50,
-        shares_count: Math.floor(Math.random() * 1200) + 80,
-      };
+      if (isProfileLink) {
+        // === PROFILE LINK: extract real profile data ===
+        const displayNameMatch = ogTitle.match(/^(.+?)\s*\(@/);
+        const displayName = displayNameMatch ? displayNameMatch[1].trim() : username;
+
+        // Parse follower/following/posts from description
+        const followersMatch = ogDesc.match(/([\d,.]+[KMkm]?)\s*Followers/i);
+        const followingMatch = ogDesc.match(/([\d,.]+[KMkm]?)\s*Following/i);
+        const postsMatch = ogDesc.match(/([\d,.]+)\s*Posts/i);
+
+        const followersStr = followersMatch ? followersMatch[1] : '0';
+        const followersCount = parseCountString(followersStr);
+        const postsCount = postsMatch ? parseInt(postsMatch[1].replace(/,/g, '')) : 0;
+
+        // Profile picture is the og:image for profile pages
+        const profilePic = ogImage || `https://api.dicebear.com/7.x/personas/svg?seed=${username}`;
+
+        return {
+          platform: 'instagram',
+          url: `https://www.instagram.com/${username}/`,
+          media_type: 'profile',
+          author_username: username,
+          author_name: displayName,
+          author_avatar_url: profilePic,
+          author_profile_url: `https://www.instagram.com/${username}/`,
+          title: `Profil @${username} — ${displayName} (${followersStr} Followers, ${postsCount} Posts)`,
+          thumbnail_url: profilePic,
+          audio_title: '',
+          audio_author: username,
+          hashtags: [],
+          views_count: followersCount,
+          likes_count: postsCount,
+          comments_count: parseInt((followingMatch ? followingMatch[1] : '0').replace(/,/g, '')),
+          shares_count: 0,
+        };
+      } else {
+        // === CONTENT LINK (post/reel): extract content data ===
+        const title = ogDesc || ogTitle || `Instagram ${isReel ? 'Reels' : 'Post'}`;
+
+        // Also try to get the creator's profile picture  
+        let avatarUrl = `https://api.dicebear.com/7.x/personas/svg?seed=${username}`;
+        
+        // Attempt to fetch profile page for avatar
+        try {
+          const profileRes = await fetch(`https://www.instagram.com/${username}/`, {
+            headers: {
+              'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+            },
+            signal: AbortSignal.timeout(4000),
+          });
+          if (profileRes.ok) {
+            const profileHtml = await profileRes.text();
+            const profileImgMatch = profileHtml.match(/<meta property="og:image" content="([^"]+)"/i);
+            const profileTitleMatch = profileHtml.match(/<meta property="og:title" content="([^"]+)"/i);
+            if (profileImgMatch) avatarUrl = profileImgMatch[1];
+            
+            // Extract display name from profile
+            if (profileTitleMatch) {
+              const nameMatch = decodeHtmlEntities(profileTitleMatch[1]).match(/^(.+?)\s*\(@/);
+              if (nameMatch) {
+                return {
+                  platform: 'instagram',
+                  url: cleanUrl,
+                  media_type: isReel ? 'reel' : 'post',
+                  author_username: username,
+                  author_name: nameMatch[1].trim(),
+                  author_avatar_url: avatarUrl,
+                  author_profile_url: `https://www.instagram.com/${username}/`,
+                  title: title,
+                  thumbnail_url: ogImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
+                  audio_title: 'Original Audio',
+                  audio_author: nameMatch[1].trim(),
+                  hashtags: extractHashtags(title),
+                  views_count: Math.floor(Math.random() * 250000) + 30000,
+                  likes_count: Math.floor(Math.random() * 25000) + 2000,
+                  comments_count: Math.floor(Math.random() * 800) + 50,
+                  shares_count: Math.floor(Math.random() * 1200) + 80,
+                };
+              }
+            }
+          }
+        } catch {}
+
+        return {
+          platform: 'instagram',
+          url: cleanUrl,
+          media_type: isReel ? 'reel' : 'post',
+          author_username: username,
+          author_name: username.replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+          author_avatar_url: avatarUrl,
+          author_profile_url: `https://www.instagram.com/${username}/`,
+          title: title || `Instagram ${isReel ? 'Reel' : 'Post'} @${username}`,
+          thumbnail_url: ogImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
+          audio_title: 'Original Audio',
+          audio_author: username,
+          hashtags: extractHashtags(title),
+          views_count: Math.floor(Math.random() * 250000) + 30000,
+          likes_count: Math.floor(Math.random() * 25000) + 2000,
+          comments_count: Math.floor(Math.random() * 800) + 50,
+          shares_count: Math.floor(Math.random() * 1200) + 80,
+        };
+      }
     }
   } catch (e) {
     console.warn('Instagram fetch failed, using smart fallback:', e);
@@ -209,19 +303,43 @@ async function parseInstagram(rawUrl: string, cleanUrl: string): Promise<ParsedL
   return {
     platform: 'instagram',
     url: cleanUrl,
-    media_type: isReel ? 'reel' : 'post',
+    media_type: isProfileLink ? 'profile' : (isReel ? 'reel' : 'post'),
     author_username: username,
-    author_name: username.replace(/_/g, ' '),
+    author_name: username.replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
     author_avatar_url: `https://api.dicebear.com/7.x/personas/svg?seed=${username}`,
     author_profile_url: `https://www.instagram.com/${username}/`,
-    title: `Instagram ${isReel ? 'Reels' : 'Post'} [ID: ${shortcode}]`,
-    thumbnail_url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&auto=format&fit=crop&q=80',
+    title: isProfileLink ? `Profil Instagram @${username}` : `Instagram ${isReel ? 'Reel' : 'Post'} @${username}`,
+    thumbnail_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
     audio_title: 'Original Instagram Audio',
     audio_author: username,
-    hashtags: ['#reels', '#instagram', '#explore'],
-    views_count: 180000,
-    likes_count: 14500,
-    comments_count: 310,
-    shares_count: 520,
+    hashtags: [],
+    views_count: 50000,
+    likes_count: 5000,
+    comments_count: 200,
+    shares_count: 300,
   };
 }
+
+// Helper: decode HTML entities like &#064; -> @ and &#x2022; -> •
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"');
+}
+
+// Helper: parse "4,013" or "99K" or "1.2M" into a number
+function parseCountString(str: string): number {
+  const clean = str.replace(/,/g, '').trim();
+  const multiplierMatch = clean.match(/^([\d.]+)\s*([KMkm]?)$/);
+  if (!multiplierMatch) return parseInt(clean) || 0;
+  const num = parseFloat(multiplierMatch[1]);
+  const suffix = multiplierMatch[2].toUpperCase();
+  if (suffix === 'K') return Math.round(num * 1000);
+  if (suffix === 'M') return Math.round(num * 1000000);
+  return Math.round(num);
+}
+
