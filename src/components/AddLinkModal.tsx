@@ -21,6 +21,7 @@ export default function AddLinkModal({
   const [parsed, setParsed] = useState<ParsedLinkData | null>(null);
 
   const [selectedCategory, setSelectedCategory] = useState(categories[0]?.id || '');
+  const [talentType, setTalentType] = useState('Chindo');
   const [outreachStatus, setOutreachStatus] = useState<OutreachStatus>('saved');
   const [rating, setRating] = useState(4);
   const [hookType, setHookType] = useState('GRWM');
@@ -84,7 +85,8 @@ export default function AddLinkModal({
       engagement_rate: er,
       rating,
       category_id: selectedCategory || null,
-      tags: parsed.hashtags?.slice(0, 3) || [],
+      talent_type: talentType,
+      tags: [talentType, ...(parsed.hashtags?.slice(0, 2) || [])],
       hook_type: hookType,
       outreach_status: outreachStatus,
       contact_phone: contactPhone,
@@ -198,22 +200,22 @@ export default function AddLinkModal({
             </div>
           )}
 
-          {/* Form Options (Category, Rating, Status) */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {/* Form Options (Category, Talent Type, Hook) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
-                Kategori:
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
+                Kategori Niche:
               </label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '9px 12px',
+                  padding: '9px 10px',
                   borderRadius: 'var(--radius-sm)',
                   background: 'var(--bg-card-solid)',
                   border: '1px solid var(--border-subtle)',
-                  fontSize: '0.82rem',
+                  fontSize: '0.8rem',
                 }}
               >
                 {categories.map((c) => (
@@ -225,7 +227,36 @@ export default function AddLinkModal({
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#f472b6', marginBottom: 6 }}>
+                Tipe / Persona Cewe:
+              </label>
+              <select
+                value={talentType}
+                onChange={(e) => setTalentType(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '9px 10px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--bg-card-solid)',
+                  border: '1px solid rgba(236, 72, 153, 0.4)',
+                  color: '#f472b6',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                }}
+              >
+                <option value="Chindo">Chindo</option>
+                <option value="Lokal / Indo">Lokal / Indo</option>
+                <option value="Hijab / Muslimah">Hijab / Muslimah</option>
+                <option value="Fienshyt / Edgy">Fienshyt / Edgy</option>
+                <option value="Bocil / Remaja">Bocil / Remaja</option>
+                <option value="Bule / Blasteran">Bule / Blasteran</option>
+                <option value="Korean Look">Korean Look</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                 Format / Hook:
               </label>
               <select
@@ -233,18 +264,18 @@ export default function AddLinkModal({
                 onChange={(e) => setHookType(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '9px 12px',
+                  padding: '9px 10px',
                   borderRadius: 'var(--radius-sm)',
                   background: 'var(--bg-card-solid)',
                   border: '1px solid var(--border-subtle)',
-                  fontSize: '0.82rem',
+                  fontSize: '0.8rem',
                 }}
               >
-                <option value="GRWM">GRWM (Get Ready With Me)</option>
-                <option value="Haul & Try-On">Haul & Try-On OOTD</option>
-                <option value="A Day in Life">A Day in Life / Vlog</option>
-                <option value="Dance / Trend">Dance / Sound Trend</option>
-                <option value="Tutorial / Tips">Tutorial / Tips & Review</option>
+                <option value="GRWM">GRWM</option>
+                <option value="Haul & Try-On">Haul & Try-On</option>
+                <option value="A Day in Life">A Day in Life</option>
+                <option value="Dance / Trend">Dance / Trend</option>
+                <option value="Tutorial / Tips">Tutorial</option>
                 <option value="POV & Comedy">POV / Comedy</option>
               </select>
             </div>

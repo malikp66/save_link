@@ -41,6 +41,7 @@ export default function ContentDetailModal({
   const [formData, setFormData] = useState({
     title: item.title || '',
     category_id: item.category_id || '',
+    talent_type: item.talent_type || 'Lokal / Indo',
     outreach_status: item.outreach_status,
     rating: item.rating || 0,
     hook_type: item.hook_type || 'GRWM',
@@ -358,25 +359,25 @@ export default function ContentDetailModal({
                 </div>
               </div>
 
-              {/* Category & Hook Type */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {/* Category, Talent Type & Hook Type */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
-                    Kategori Konten:
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
+                    Kategori Niche:
                   </label>
                   <select
                     value={formData.category_id}
                     onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                     style={{
                       width: '100%',
-                      padding: '8px 12px',
+                      padding: '8px 10px',
                       borderRadius: 'var(--radius-sm)',
                       background: 'var(--bg-card-solid)',
                       border: '1px solid var(--border-subtle)',
-                      fontSize: '0.82rem',
+                      fontSize: '0.8rem',
                     }}
                   >
-                    <option value="">-- Pilih Kategori --</option>
+                    <option value="">-- Pilih --</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -386,7 +387,36 @@ export default function ContentDetailModal({
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#f472b6', marginBottom: 6 }}>
+                    Tipe / Persona Cewe:
+                  </label>
+                  <select
+                    value={formData.talent_type}
+                    onChange={(e) => setFormData({ ...formData, talent_type: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'var(--bg-card-solid)',
+                      border: '1px solid rgba(236, 72, 153, 0.4)',
+                      color: '#f472b6',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <option value="Chindo">Chindo</option>
+                    <option value="Lokal / Indo">Lokal / Indo</option>
+                    <option value="Hijab / Muslimah">Hijab / Muslimah</option>
+                    <option value="Fienshyt / Edgy">Fienshyt / Edgy</option>
+                    <option value="Bocil / Remaja">Bocil / Remaja</option>
+                    <option value="Bule / Blasteran">Bule / Blasteran</option>
+                    <option value="Korean Look">Korean Look</option>
+                    <option value="Lainnya">Lainnya</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                     Format / Hook:
                   </label>
                   <select
@@ -394,20 +424,20 @@ export default function ContentDetailModal({
                     onChange={(e) => setFormData({ ...formData, hook_type: e.target.value })}
                     style={{
                       width: '100%',
-                      padding: '8px 12px',
+                      padding: '8px 10px',
                       borderRadius: 'var(--radius-sm)',
                       background: 'var(--bg-card-solid)',
                       border: '1px solid var(--border-subtle)',
-                      fontSize: '0.82rem',
+                      fontSize: '0.8rem',
                     }}
                   >
-                    <option value="GRWM">GRWM (Get Ready With Me)</option>
-                    <option value="Haul & Try-On">Haul & Try-On OOTD</option>
-                    <option value="A Day in Life">A Day in Life / Vlog</option>
-                    <option value="Dance / Trend">Dance / Sound Trend</option>
-                    <option value="Tutorial / Tips">Tutorial / Tips & Review</option>
+                    <option value="GRWM">GRWM</option>
+                    <option value="Haul & Try-On">Haul & Try-On</option>
+                    <option value="A Day in Life">A Day in Life</option>
+                    <option value="Dance / Trend">Dance / Trend</option>
+                    <option value="Tutorial / Tips">Tutorial</option>
                     <option value="POV & Comedy">POV / Comedy</option>
-                    <option value="Aesthetic Vibe">Aesthetic / Chill Vibe</option>
+                    <option value="Aesthetic Vibe">Aesthetic</option>
                   </select>
                 </div>
               </div>

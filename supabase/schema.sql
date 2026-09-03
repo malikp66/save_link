@@ -40,6 +40,7 @@ create table if not exists saved_links (
     engagement_rate numeric(8, 2) default 0.00,
     rating int default 0 check (rating between 0 and 5),
     category_id uuid references categories(id) on delete set null,
+    talent_type text,
     tags text[] default '{}',
     hook_type text,
     outreach_status text not null default 'saved' check (
@@ -77,14 +78,16 @@ create policy "Allow all operations for anon categories" on categories
 create policy "Allow all operations for anon saved_links" on saved_links
     for all using (true) with check (true);
 
--- 5. Seed default categories
+-- 5. Seed default categories (Niche & Demografi)
 insert into categories (name, slug, color, icon, is_system)
 values
+    ('Chindo', 'chindo', '#ec4899', 'sparkles', true),
+    ('Lokal / Indo', 'lokal-indo', '#f59e0b', 'smile', true),
+    ('Hijab / Muslimah', 'hijab-muslimah', '#10b981', 'heart', true),
+    ('Fienshyt / Edgy', 'fienshyt-edgy', '#8b5cf6', 'flame', true),
+    ('Bocil / Remaja', 'bocil-remaja', '#06b6d4', 'star', true),
     ('Fashion & OOTD', 'fashion-ootd', '#ec4899', 'shirt', true),
     ('Beauty & Skincare', 'beauty-skincare', '#f43f5e', 'sparkles', true),
     ('Dance & Trends', 'dance-trends', '#a855f7', 'music', true),
-    ('Lifestyle & Vlog', 'lifestyle-vlog', '#06b6d4', 'camera', true),
-    ('Fitness & Health', 'fitness-health', '#10b981', 'activity', true),
-    ('Cosplay & Aesthetic', 'cosplay-aesthetic', '#8b5cf6', 'palette', true),
-    ('Comedy & POV', 'comedy-pov', '#f59e0b', 'smile', true)
+    ('Lifestyle & Vlog', 'lifestyle-vlog', '#06b6d4', 'camera', true)
 on conflict (slug) do nothing;

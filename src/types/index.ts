@@ -40,6 +40,7 @@ export interface SavedLink {
   engagement_rate: number; // percentage, e.g. 5.42
   rating: number; // 0-5
   category_id?: string | null;
+  talent_type?: string; // e.g. Chindo, Lokal, Hijab/Muslimah, Fienshyt, Bocil/Remaja
   tags: string[];
   hook_type?: string;
   outreach_status: OutreachStatus;
@@ -65,6 +66,7 @@ export interface ParsedLinkData {
   audio_title?: string;
   audio_author?: string;
   hashtags: string[];
+  talent_type?: string;
   views_count?: number;
   likes_count?: number;
   comments_count?: number;

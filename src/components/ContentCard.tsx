@@ -236,8 +236,22 @@ export default function ContentCard({
           {item.title || 'Tanpa keterangan'}
         </p>
 
-        {/* Category & Hook Tag */}
+        {/* Category, Talent Type & Hook Tag */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {item.talent_type && (
+            <span style={{
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: 'var(--radius-sm)',
+              background: 'rgba(236, 72, 153, 0.15)',
+              color: '#f472b6',
+              border: '1px solid rgba(236, 72, 153, 0.35)',
+            }}>
+              {item.talent_type}
+            </span>
+          )}
+
           {category && (
             <span style={{
               fontSize: '0.7rem',

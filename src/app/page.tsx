@@ -9,6 +9,7 @@ import BulkImportModal from '@/components/BulkImportModal';
 import CategoryManagerModal from '@/components/CategoryManagerModal';
 import AnalyticsView from '@/components/AnalyticsView';
 import OutreachCrmView from '@/components/OutreachCrmView';
+import SupabaseAlertBanner from '@/components/SupabaseAlertBanner';
 import { 
   SavedLink, 
   Category, 
@@ -23,7 +24,10 @@ import {
   createSavedLink, 
   updateSavedLink, 
   deleteSavedLink,
-  updateOutreachStatus 
+  updateOutreachStatus,
+  checkSupabaseStatus,
+  SupabaseStatusResult,
+  TALENT_TYPES
 } from '@/lib/db';
 import { 
   Search, 
@@ -39,6 +43,7 @@ export default function Home() {
   const [links, setLinks] = useState<SavedLink[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [supabaseStatus, setSupabaseStatus] = useState<SupabaseStatusResult | null>(null);
 
   // Tabs
   const [activeTab, setActiveTab] = useState<'feed' | 'analytics' | 'crm'>('feed');
@@ -47,6 +52,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [platformFilter, setPlatformFilter] = useState<'all' | Platform>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [talentTypeFilter, setTalentTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'highest_er' | 'highest_views' | 'rating'>('newest');
 
@@ -57,6 +63,15 @@ export default function Home() {
   const [selectedDetailItem, setSelectedDetailItem] = useState<SavedLink | null>(null);
 
   // Initial load
+  const checkStatus = async () => {
+    try {
+      const res = await checkSupabaseStatus();
+      setSupabaseStatus(res);
+    } catch (e) {
+      console.error('Error checking supabase status:', e);
+    }
+  };
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -66,6 +81,7 @@ export default function Home() {
         ]);
         setCategories(cats);
         setLinks(lks);
+        await checkStatus();
       } catch (err) {
         console.error('Error loading initial data:', err);
       } finally {
@@ -132,7 +148,8 @@ export default function Home() {
           const matchAudio = item.audio_title?.toLowerCase().includes(q);
           const matchHashtags = (item.hashtags || []).some((h) => h.toLowerCase().includes(q));
           const matchNotes = item.contact_notes?.toLowerCase().includes(q);
-          if (!matchAuthor && !matchTitle && !matchAudio && !matchHashtags && !matchNotes) {
+          const matchTalentType = item.talent_type?.toLowerCase().includes(q);
+          if (!matchAuthor && !matchTitle && !matchAudio && !matchHashtags && !matchNotes && !matchTalentType) {
             return false;
           }
         }
@@ -144,6 +161,11 @@ export default function Home() {
 
         // Category
         if (categoryFilter !== 'all' && item.category_id !== categoryFilter) {
+          return false;
+        }
+
+        // Talent Type / Persona Demografi
+        if (talentTypeFilter !== 'all' && item.talent_type !== talentTypeFilter) {
           return false;
         }
 
@@ -182,6 +204,9 @@ export default function Home() {
         onOpenCategoryModal={() => setIsCategoryOpen(true)}
         totalLinksCount={links.length}
       />
+
+      {/* Supabase Connection Alert Banner */}
+      <SupabaseAlertBanner status={supabaseStatus} onRefresh={checkStatus} />
 
       {/* Main Content Area */}
       <main className="app-container" style={{ flex: 1 }}>
@@ -269,6 +294,55 @@ export default function Home() {
                   >
                     Instagram Only
                   </button>
+                </div>
+              </div>
+
+              {/* Talent Type / Persona Filter Pills */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                flexWrap: 'wrap',
+                borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                paddingTop: 10,
+              }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f472b6', minWidth: 90 }}>
+                  Tipe Cewe:
+                </span>
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '100%', paddingBottom: 2 }}>
+                  <button
+                    onClick={() => setTalentTypeFilter('all')}
+                    style={{
+                      whiteSpace: 'nowrap',
+                      padding: '4px 10px',
+                      borderRadius: 'var(--radius-full)',
+                      fontSize: '0.73rem',
+                      fontWeight: 600,
+                      background: talentTypeFilter === 'all' ? '#ec4899' : 'rgba(255, 255, 255, 0.04)',
+                      color: '#ffffff',
+                      border: '1px solid rgba(236, 72, 153, 0.3)',
+                    }}
+                  >
+                    Semua Tipe
+                  </button>
+                  {TALENT_TYPES.map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => setTalentTypeFilter(type)}
+                      style={{
+                        whiteSpace: 'nowrap',
+                        padding: '4px 10px',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: '0.73rem',
+                        fontWeight: 600,
+                        background: talentTypeFilter === type ? 'rgba(236, 72, 153, 0.3)' : 'rgba(255, 255, 255, 0.03)',
+                        color: talentTypeFilter === type ? '#f472b6' : 'var(--text-muted)',
+                        border: `1px solid ${talentTypeFilter === type ? '#ec4899' : 'var(--border-subtle)'}`,
+                      }}
+                    >
+                      {type}
+                    </button>
+                  ))}
                 </div>
               </div>
 

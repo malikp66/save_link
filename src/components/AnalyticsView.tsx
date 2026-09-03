@@ -44,6 +44,20 @@ export default function AnalyticsView({ links, categories }: AnalyticsViewProps)
     };
   }).filter((c) => c.count > 0).sort((a, b) => b.avgER - a.avgER);
 
+  // Talent Type / Persona Stats
+  const talentTypeMap: Record<string, { count: number; totalER: number }> = {};
+  links.forEach((l) => {
+    const t = l.talent_type || 'Lainnya';
+    if (!talentTypeMap[t]) talentTypeMap[t] = { count: 0, totalER: 0 };
+    talentTypeMap[t].count += 1;
+    talentTypeMap[t].totalER += (l.engagement_rate || 0);
+  });
+  const talentTypeStats = Object.entries(talentTypeMap).map(([type, data]) => ({
+    type,
+    count: data.count,
+    avgER: Number((data.totalER / Math.max(data.count, 1)).toFixed(2)),
+  })).sort((a, b) => b.count - a.count);
+
   // Trending Sounds
   const soundMap: Record<string, { count: number; sound: string; author: string }> = {};
   links.forEach((l) => {
@@ -225,6 +239,53 @@ export default function AnalyticsView({ links, categories }: AnalyticsViewProps)
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Row: Demographic & Persona Talent Breakdown */}
+      <div className="glass-panel" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Users2 size={18} color="#ec4899" />
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 700 }}>Analisis Tren Tipe & Demografi Talent (Chindo, Lokal, Hijab, Fienshyt, Bocil)</h3>
+          </div>
+          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Popularitas & rata-rata Engagement Rate</span>
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 12,
+        }}>
+          {talentTypeStats.map((item, idx) => (
+            <div
+              key={idx}
+              style={{
+                padding: '12px 14px',
+                borderRadius: 'var(--radius-sm)',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid var(--border-subtle)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f472b6' }}>
+                  {item.type}
+                </span>
+                <span className="badge" style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#f472b6', fontSize: '0.68rem' }}>
+                  {item.count} video
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Avg. ER:</span>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#34d399' }}>
+                  {item.avgER}%
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

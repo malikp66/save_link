@@ -2,14 +2,85 @@ import { Category, SavedLink, OutreachStatus } from '@/types';
 import { supabase, isSupabaseConfigured } from './supabase';
 
 const INITIAL_CATEGORIES: Category[] = [
+  { id: 'cat-chindo', name: 'Chindo', slug: 'chindo', color: '#ec4899', icon: 'sparkles', is_system: true },
+  { id: 'cat-lokal', name: 'Lokal / Indo', slug: 'lokal-indo', color: '#f59e0b', icon: 'smile', is_system: true },
+  { id: 'cat-hijab', name: 'Hijab / Muslimah', slug: 'hijab-muslimah', color: '#10b981', icon: 'heart', is_system: true },
+  { id: 'cat-fienshyt', name: 'Fienshyt / Edgy', slug: 'fienshyt-edgy', color: '#8b5cf6', icon: 'flame', is_system: true },
+  { id: 'cat-bocil', name: 'Bocil / Remaja', slug: 'bocil-remaja', color: '#06b6d4', icon: 'star', is_system: true },
   { id: 'cat-1', name: 'Fashion & OOTD', slug: 'fashion-ootd', color: '#ec4899', icon: 'shirt', is_system: true },
   { id: 'cat-2', name: 'Beauty & Skincare', slug: 'beauty-skincare', color: '#f43f5e', icon: 'sparkles', is_system: true },
   { id: 'cat-3', name: 'Dance & Trends', slug: 'dance-trends', color: '#a855f7', icon: 'music', is_system: true },
   { id: 'cat-4', name: 'Lifestyle & Vlog', slug: 'lifestyle-vlog', color: '#06b6d4', icon: 'camera', is_system: true },
-  { id: 'cat-5', name: 'Fitness & Health', slug: 'fitness-health', color: '#10b981', icon: 'activity', is_system: true },
-  { id: 'cat-6', name: 'Cosplay & Aesthetic', slug: 'cosplay-aesthetic', color: '#8b5cf6', icon: 'palette', is_system: true },
-  { id: 'cat-7', name: 'Comedy & POV', slug: 'comedy-pov', color: '#f59e0b', icon: 'smile', is_system: true },
 ];
+
+export const TALENT_TYPES = [
+  'Chindo',
+  'Lokal / Indo',
+  'Hijab / Muslimah',
+  'Fienshyt / Edgy',
+  'Bocil / Remaja',
+  'Bule / Blasteran',
+  'Korean Look',
+  'Lainnya',
+];
+
+export interface SupabaseStatusResult {
+  isConfigured: boolean;
+  isConnected: boolean;
+  tablesExist: boolean;
+  message: string;
+  projectUrl?: string;
+}
+
+export async function checkSupabaseStatus(): Promise<SupabaseStatusResult> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  if (!isSupabaseConfigured || !supabase) {
+    return {
+      isConfigured: false,
+      isConnected: false,
+      tablesExist: false,
+      message: 'Supabase URL & Key belum diisi. Aplikasi berjalan dalam mode Local-First (Offline/Local Storage).',
+    };
+  }
+
+  try {
+    const { data, error } = await supabase.from('categories').select('id').limit(1);
+    if (error) {
+      if (error.message.includes('Could not find the table') || error.code === '42P01') {
+        return {
+          isConfigured: true,
+          isConnected: true,
+          tablesExist: false,
+          message: 'Terhubung ke Supabase Cloud! Namun tabel belum dibuat. Harap jalankan supabase/schema.sql di Supabase SQL Editor.',
+          projectUrl: url,
+        };
+      }
+      return {
+        isConfigured: true,
+        isConnected: false,
+        tablesExist: false,
+        message: `Error koneksi Supabase: ${error.message}`,
+        projectUrl: url,
+      };
+    }
+
+    return {
+      isConfigured: true,
+      isConnected: true,
+      tablesExist: true,
+      message: 'Berhasil terhubung ke Supabase Cloud Database! Sinkronisasi real-time aktif.',
+      projectUrl: url,
+    };
+  } catch (err: any) {
+    return {
+      isConfigured: true,
+      isConnected: false,
+      tablesExist: false,
+      message: `Gagal menjangkau Supabase: ${err.message}`,
+      projectUrl: url,
+    };
+  }
+}
 
 const INITIAL_LINKS: SavedLink[] = [
   {
@@ -32,8 +103,9 @@ const INITIAL_LINKS: SavedLink[] = [
     shares_count: 1420,
     engagement_rate: 8.97,
     rating: 5,
-    category_id: 'cat-2',
-    tags: ['Skincare', 'Tutorial', 'High Engagement', 'Priority Talent'],
+    category_id: 'cat-chindo',
+    talent_type: 'Chindo',
+    tags: ['Chindo', 'Skincare', 'Tutorial', 'Priority Talent'],
     hook_type: 'GRWM',
     outreach_status: 'shortlisted',
     contact_phone: '+6281234567890',
@@ -62,8 +134,9 @@ const INITIAL_LINKS: SavedLink[] = [
     shares_count: 5400,
     engagement_rate: 11.37,
     rating: 5,
-    category_id: 'cat-1',
-    tags: ['Fashion', 'OOTD Try On', 'Monochrome', 'Viral Sound'],
+    category_id: 'cat-lokal',
+    talent_type: 'Lokal / Indo',
+    tags: ['Lokal', 'Fashion', 'OOTD Try On', 'Monochrome'],
     hook_type: 'Haul & Try-On',
     outreach_status: 'contacted',
     contact_phone: '+6281987654321',
@@ -92,8 +165,9 @@ const INITIAL_LINKS: SavedLink[] = [
     shares_count: 8900,
     engagement_rate: 12.26,
     rating: 4,
-    category_id: 'cat-3',
-    tags: ['Dance', 'Kpop', 'Trending Audio'],
+    category_id: 'cat-fienshyt',
+    talent_type: 'Fienshyt / Edgy',
+    tags: ['Fienshyt', 'Dance', 'Kpop', 'Trending Audio'],
     hook_type: 'Dance / Trend',
     outreach_status: 'in_discussion',
     contact_phone: '+6287712348899',
@@ -122,8 +196,9 @@ const INITIAL_LINKS: SavedLink[] = [
     shares_count: 610,
     engagement_rate: 9.00,
     rating: 4,
-    category_id: 'cat-4',
-    tags: ['Daily Vlog', 'Cafe Hopping', 'Aesthetic'],
+    category_id: 'cat-hijab',
+    talent_type: 'Hijab / Muslimah',
+    tags: ['Hijab / Muslimah', 'Daily Vlog', 'Cafe Hopping', 'Aesthetic'],
     hook_type: 'A Day in Life',
     outreach_status: 'saved',
     contact_phone: '',
