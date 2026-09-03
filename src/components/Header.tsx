@@ -189,7 +189,7 @@ export default function Header({
                 }}
               >
                 <Lock size={14} />
-                <span>Kunci (mafiaBos)</span>
+                <span>Kunci</span>
               </button>
             )}
           </div>

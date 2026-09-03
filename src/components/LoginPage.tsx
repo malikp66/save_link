@@ -193,7 +193,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Masukkan username (mafiaBos)"
+                placeholder="Masukkan username"
                 autoFocus
                 required
                 style={{
