@@ -32,14 +32,22 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  // Network first with cache fallback
+  // Ignore chrome-extension and non-http(s) requests
+  if (!event.request.url.startsWith('http')) return;
+
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
         return networkResponse;
       })
-      .catch(() => {
-        return caches.match(event.request);
+      .catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        return new Response('Network error / offline', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: new Headers({ 'Content-Type': 'text/plain' })
+        });
       })
   );
 });

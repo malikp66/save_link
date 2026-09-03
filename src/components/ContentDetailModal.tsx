@@ -267,9 +267,12 @@ export default function ContentDetailModal({
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, minHeight: 320, background: '#0e111a', gap: 12 }}>
                       <img 
-                        src={item.thumbnail_url || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80'} 
+                        src={item.thumbnail_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'} 
                         alt={item.title}
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+                        }}
                         style={{ width: '100%', maxHeight: 280, objectFit: 'contain', borderRadius: 'var(--radius-sm)' }}
                       />
                       <a
@@ -297,6 +300,9 @@ export default function ContentDetailModal({
                       src={item.thumbnail_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'} 
                       alt={item.title}
                       referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+                      }}
                       style={{
                         width: '100%',
                         height: '100%',
