@@ -66,22 +66,31 @@ import {
 } from 'lucide-react';
 
 export default function Home() {
-  // Auth state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
-
-  // Check stored auth on mount
-  useEffect(() => {
-    const stored = localStorage.getItem('talentpulse_auth') || sessionStorage.getItem('talentpulse_auth');
-    if (stored) {
+  // Auth state with synchronous initialization
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
       try {
+        const stored = localStorage.getItem('talentpulse_auth') || sessionStorage.getItem('talentpulse_auth');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return parsed.username === 'mafiaBos';
+        }
+      } catch {}
+    }
+    return false;
+  });
+
+  // Hydrate auth state after mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('talentpulse_auth') || sessionStorage.getItem('talentpulse_auth');
+      if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed.username === 'mafiaBos') {
           setIsAuthenticated(true);
         }
-      } catch {}
-    }
-    setAuthChecked(true);
+      }
+    } catch {}
   }, []);
 
   const handleLoginSuccess = (username: string) => {
@@ -262,21 +271,6 @@ export default function Home() {
       loadData();
     }
   };
-
-  // Auth guard: show login page if not authenticated
-  if (!authChecked) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#0a0b12',
-      }}>
-        <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Memuat...</div>
-      </div>
-    );
-  }
 
   if (!isAuthenticated) {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
