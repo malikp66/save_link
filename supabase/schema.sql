@@ -91,3 +91,23 @@ values
     ('Dance & Trends', 'dance-trends', '#a855f7', 'music', true),
     ('Lifestyle & Vlog', 'lifestyle-vlog', '#06b6d4', 'camera', true)
 on conflict (slug) do nothing;
+
+-- 6. Table: app_users (Authentication & App Lock)
+create table if not exists app_users (
+    id uuid primary key default gen_random_uuid(),
+    username text not null unique,
+    password_hash text not null,
+    role text not null default 'admin',
+    created_at timestamptz not null default now()
+);
+
+alter table app_users enable row level security;
+
+create policy "Allow all operations for anon app_users" on app_users
+    for all using (true) with check (true);
+
+-- Seed default admin user: mafiaBos / mafiaBos625
+insert into app_users (username, password_hash, role)
+values ('mafiaBos', 'mafiaBos625', 'admin')
+on conflict (username) do update set password_hash = 'mafiaBos625';
+

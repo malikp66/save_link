@@ -320,3 +320,154 @@ select option {
 .pulse-glow {
   animation: pulseGlow 3s infinite;
 }
+
+/* Login Shake Animation */
+@keyframes shakeX {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+  20%, 40%, 60%, 80% { transform: translateX(6px); }
+}
+.animate-shake {
+  animation: shakeX 0.6s ease-in-out;
+}
+
+/* ========================================
+   MOBILE RESPONSIVE STYLES
+   ======================================== */
+
+/* Mobile: Header */
+@media (max-width: 768px) {
+  header .app-container,
+  header > div > div {
+    padding: 10px 12px !important;
+  }
+
+  /* Stack header action buttons vertically */
+  header [style*="gap: 8px"][style*="flex-wrap"] {
+    gap: 6px !important;
+  }
+
+  /* Smaller title */
+  header h1 {
+    font-size: 1rem !important;
+  }
+
+  /* Smaller tabs */
+  header button {
+    font-size: 0.72rem !important;
+    padding: 6px 10px !important;
+  }
+}
+
+/* Mobile: App Container */
+@media (max-width: 640px) {
+  .app-container {
+    padding: 10px 10px 80px 10px !important;
+  }
+
+  .content-grid {
+    gap: 12px !important;
+  }
+
+  /* Glass panels (filter toolbar) */
+  .glass-panel {
+    padding: 10px 12px !important;
+  }
+
+  /* Fix filter toolbar wrapping on mobile */
+  .glass-panel > div {
+    flex-wrap: wrap !important;
+  }
+
+  /* Smaller search input */
+  .glass-panel input[type="text"] {
+    font-size: 0.8rem !important;
+    padding: 8px 10px 8px 34px !important;
+    min-width: 0 !important;
+  }
+
+  /* Mobile buttons: smaller */
+  .btn-primary,
+  .btn-secondary {
+    padding: 7px 10px !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* Hide long button text on mobile, show icons */
+  #btn-open-bulk span,
+  #btn-reset-real-data span,
+  #btn-lock-app span {
+    display: none;
+  }
+
+  #btn-open-bulk,
+  #btn-reset-real-data,
+  #btn-lock-app {
+    padding: 8px !important;
+  }
+}
+
+/* Mobile: Modal full screen */
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+
+  .modal-content {
+    max-height: 95vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Content detail modal scrollable panels */
+  .modal-content > div {
+    padding: 14px !important;
+  }
+}
+
+/* Mobile: Cards */
+@media (max-width: 480px) {
+  /* Card images */
+  .content-grid img {
+    max-height: 180px !important;
+  }
+
+  /* Category pills scrollable */
+  .content-grid + div,
+  div[style*="overflowX"] {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Stat metrics in cards */
+  .content-grid [style*="gap: 12px"] {
+    gap: 6px !important;
+  }
+}
+
+/* Tablet landscape */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .app-container {
+    padding: 16px 16px 60px 16px !important;
+  }
+}
+
+/* Touch-friendly: larger tap targets */
+@media (hover: none) and (pointer: coarse) {
+  button, a, input, select {
+    min-height: 40px;
+  }
+  
+  /* Prevent double-tap zoom */
+  button {
+    touch-action: manipulation;
+  }
+}
+
+/* Safe area for notched phones (iPhone etc.) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .app-container {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+  }
+}
+

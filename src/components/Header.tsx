@@ -11,7 +11,8 @@ import {
   LayoutGrid, 
   Database,
   Smartphone,
-  RotateCcw
+  RotateCcw,
+  Lock
 } from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
@@ -22,6 +23,7 @@ interface HeaderProps {
   onOpenBulkModal: () => void;
   onOpenCategoryModal: () => void;
   onResetToRealData?: () => void;
+  onLogout?: () => void;
   totalLinksCount: number;
   totalProfilesCount?: number;
 }
@@ -33,6 +35,7 @@ export default function Header({
   onOpenBulkModal,
   onOpenCategoryModal,
   onResetToRealData,
+  onLogout,
   totalLinksCount,
   totalProfilesCount,
 }: HeaderProps) {
@@ -168,6 +171,27 @@ export default function Header({
               <Plus size={16} />
               <span>Simpan Link</span>
             </button>
+
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="btn-secondary"
+                id="btn-lock-app"
+                title="Kunci Aplikasi / Logout"
+                style={{
+                  padding: '8px 12px',
+                  fontSize: '0.8rem',
+                  borderColor: 'rgba(239, 68, 68, 0.4)',
+                  color: '#fca5a5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Lock size={14} />
+                <span>Kunci (mafiaBos)</span>
+              </button>
+            )}
           </div>
         </div>
 

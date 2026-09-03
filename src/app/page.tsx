@@ -13,6 +13,7 @@ import ProfilesView from '@/components/ProfilesView';
 import ProfileDetailModal from '@/components/ProfileDetailModal';
 import SupabaseAlertBanner from '@/components/SupabaseAlertBanner';
 import CustomSelect, { SelectOption } from '@/components/CustomSelect';
+import LoginPage from '@/components/LoginPage';
 import { aggregateCreatorProfiles } from '@/lib/profileAggregator';
 import { 
   SavedLink, 
@@ -62,6 +63,34 @@ import {
 } from 'lucide-react';
 
 export default function Home() {
+  // Auth state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Check stored auth on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('talentpulse_auth') || sessionStorage.getItem('talentpulse_auth');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.username === 'mafiaBos') {
+          setIsAuthenticated(true);
+        }
+      } catch {}
+    }
+    setAuthChecked(true);
+  }, []);
+
+  const handleLoginSuccess = (username: string) => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('talentpulse_auth');
+    sessionStorage.removeItem('talentpulse_auth');
+    setIsAuthenticated(false);
+  };
+
   const [links, setLinks] = useState<SavedLink[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -231,6 +260,25 @@ export default function Home() {
     }
   };
 
+  // Auth guard: show login page if not authenticated
+  if (!authChecked) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0a0b12',
+      }}>
+        <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Memuat...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
@@ -241,6 +289,7 @@ export default function Home() {
         onOpenBulkModal={() => setIsBulkOpen(true)}
         onOpenCategoryModal={() => setIsCategoryOpen(true)}
         onResetToRealData={handleResetToRealData}
+        onLogout={handleLogout}
         totalLinksCount={links.length}
         totalProfilesCount={creatorProfiles.length}
       />
