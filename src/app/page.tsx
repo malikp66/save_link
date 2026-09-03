@@ -44,7 +44,8 @@ import {
   updateOutreachStatus,
   checkSupabaseStatus,
   SupabaseStatusResult,
-  TALENT_TYPES
+  TALENT_TYPES,
+  resetToRealUserLinks
 } from '@/lib/db';
 import { 
   Search, 
@@ -89,22 +90,23 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [cats, lks] = await Promise.all([
-          fetchCategories(),
-          fetchSavedLinks(),
-        ]);
-        setCategories(cats);
-        setLinks(lks);
-        await checkStatus();
-      } catch (err) {
-        console.error('Error loading initial data:', err);
-      } finally {
-        setLoading(false);
-      }
+  const loadData = async () => {
+    try {
+      const [cats, lks] = await Promise.all([
+        fetchCategories(),
+        fetchSavedLinks(),
+      ]);
+      setCategories(cats);
+      setLinks(lks);
+      await checkStatus();
+    } catch (err) {
+      console.error('Error loading initial data:', err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
 
@@ -210,6 +212,14 @@ export default function Home() {
       });
   }, [links, searchQuery, platformFilter, categoryFilter, statusFilter, sortBy]);
 
+  const handleResetToRealData = () => {
+    if (confirm('Bersihkan data lama dan muat 176 link kurasi dari notes Anda?')) {
+      const fresh = resetToRealUserLinks();
+      setLinks([...fresh]);
+      loadData();
+    }
+  };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
@@ -219,6 +229,7 @@ export default function Home() {
         onOpenAddModal={() => setIsAddOpen(true)}
         onOpenBulkModal={() => setIsBulkOpen(true)}
         onOpenCategoryModal={() => setIsCategoryOpen(true)}
+        onResetToRealData={handleResetToRealData}
         totalLinksCount={links.length}
       />
 

@@ -10,7 +10,8 @@ import {
   Users2, 
   LayoutGrid, 
   Database,
-  Smartphone
+  Smartphone,
+  RotateCcw
 } from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
@@ -20,6 +21,7 @@ interface HeaderProps {
   onOpenAddModal: () => void;
   onOpenBulkModal: () => void;
   onOpenCategoryModal: () => void;
+  onResetToRealData?: () => void;
   totalLinksCount: number;
 }
 
@@ -29,6 +31,7 @@ export default function Header({
   onOpenAddModal,
   onOpenBulkModal,
   onOpenCategoryModal,
+  onResetToRealData,
   totalLinksCount,
 }: HeaderProps) {
   return (
@@ -132,6 +135,27 @@ export default function Header({
               <FileText size={15} />
               <span>Import dari Notes</span>
             </button>
+
+            {onResetToRealData && (
+              <button
+                onClick={onResetToRealData}
+                className="btn-secondary"
+                id="btn-reset-real-data"
+                title="Muat 176 link hasil kurasi notes Anda"
+                style={{ 
+                  padding: '8px 12px', 
+                  fontSize: '0.8rem', 
+                  borderColor: 'rgba(236, 72, 153, 0.4)', 
+                  color: '#f472b6',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+              >
+                <RotateCcw size={14} />
+                <span>Muat 176 Link Notes</span>
+              </button>
+            )}
 
             <button
               onClick={onOpenAddModal}
