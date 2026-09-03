@@ -74,6 +74,10 @@ export default function ContentCard({
         flexDirection: 'column',
         position: 'relative',
         borderRadius: 'var(--radius-md)',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
       }}
     >
       {/* Media Thumbnail Container */}
@@ -106,8 +110,8 @@ export default function ContentCard({
             }}
             loading="lazy"
             onError={(e) => {
-              // fallback image if broken link
-              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
+              // fallback portrait if broken link
+              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
             }}
           />
         ) : (

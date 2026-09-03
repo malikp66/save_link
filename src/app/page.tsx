@@ -308,10 +308,11 @@ export default function Home() {
             {/* Search & Filter Toolbar */}
             <div className="glass-panel" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Search input + Platform quick pills */}
-              <div className="filter-search-row" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div className="filter-search-row">
                 <div style={{
                   flex: 1,
-                  minWidth: 260,
+                  minWidth: 0,
+                  width: '100%',
                   position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
@@ -343,11 +344,11 @@ export default function Home() {
                 </div>
 
                 {/* Platform filter pills */}
-                <div className="filter-platform-pills" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <div className="filter-platform-pills">
                   <button
                     onClick={() => setPlatformFilter('all')}
                     style={{
-                      padding: '7px 14px',
+                      padding: '7px 12px',
                       borderRadius: 'var(--radius-sm)',
                       fontSize: '0.78rem',
                       fontWeight: 600,
@@ -356,12 +357,12 @@ export default function Home() {
                       border: '1px solid var(--border-subtle)',
                     }}
                   >
-                    Semua Platform
+                    Semua
                   </button>
                   <button
                     onClick={() => setPlatformFilter('tiktok')}
                     style={{
-                      padding: '7px 14px',
+                      padding: '7px 12px',
                       borderRadius: 'var(--radius-sm)',
                       fontSize: '0.78rem',
                       fontWeight: 600,
@@ -370,12 +371,12 @@ export default function Home() {
                       border: platformFilter === 'tiktok' ? '1px solid rgba(6, 182, 212, 0.4)' : '1px solid var(--border-subtle)',
                     }}
                   >
-                    TikTok Only
+                    TikTok
                   </button>
                   <button
                     onClick={() => setPlatformFilter('instagram')}
                     style={{
-                      padding: '7px 14px',
+                      padding: '7px 12px',
                       borderRadius: 'var(--radius-sm)',
                       fontSize: '0.78rem',
                       fontWeight: 600,
@@ -384,24 +385,17 @@ export default function Home() {
                       border: platformFilter === 'instagram' ? '1px solid rgba(244, 63, 94, 0.4)' : '1px solid var(--border-subtle)',
                     }}
                   >
-                    Instagram Only
+                    Instagram
                   </button>
                 </div>
               </div>
 
               {/* Talent Type / Persona Filter Pills */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                flexWrap: 'wrap',
-                borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-                paddingTop: 10,
-              }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f472b6', minWidth: 90 }}>
+              <div className="filter-scroll-row">
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f472b6', flexShrink: 0 }}>
                   Tipe Cewe:
                 </span>
-                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '100%', paddingBottom: 2 }}>
+                <div className="filter-pill-scroll">
                   <button
                     onClick={() => setTalentTypeFilter('all')}
                     style={{
@@ -438,25 +432,19 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Category Pills & Sort dropdown */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: 10,
-                borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-                paddingTop: 10,
-              }}>
-                {/* Horizontal scrollable category filters */}
-                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '100%', paddingBottom: 4 }}>
+              {/* Category Pills */}
+              <div className="filter-scroll-row">
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', flexShrink: 0 }}>
+                  Kategori:
+                </span>
+                <div className="filter-pill-scroll">
                   <button
                     onClick={() => setCategoryFilter('all')}
                     style={{
                       whiteSpace: 'nowrap',
-                      padding: '5px 12px',
+                      padding: '4px 10px',
                       borderRadius: 'var(--radius-full)',
-                      fontSize: '0.75rem',
+                      fontSize: '0.73rem',
                       fontWeight: 600,
                       background: categoryFilter === 'all' ? 'var(--primary)' : 'rgba(255, 255, 255, 0.05)',
                       color: '#ffffff',
@@ -464,16 +452,15 @@ export default function Home() {
                   >
                     Semua Kategori
                   </button>
-
                   {categories.map((cat) => (
                     <button
                       key={cat.id}
                       onClick={() => setCategoryFilter(cat.id)}
                       style={{
                         whiteSpace: 'nowrap',
-                        padding: '5px 12px',
+                        padding: '4px 10px',
                         borderRadius: 'var(--radius-full)',
-                        fontSize: '0.75rem',
+                        fontSize: '0.73rem',
                         fontWeight: 600,
                         background: categoryFilter === cat.id ? `${cat.color}35` : 'rgba(255, 255, 255, 0.04)',
                         color: categoryFilter === cat.id ? cat.color : 'var(--text-muted)',
@@ -484,25 +471,23 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
+              </div>
 
-                {/* Sort & Status Selectors */}
-                <div className="filter-selectors-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CustomSelect
-                    value={statusFilter}
-                    onChange={(val) => setStatusFilter(val)}
-                    options={STATUS_FILTER_OPTIONS}
-                    size="sm"
-                    width={160}
-                  />
+              {/* Sort & Status Selectors */}
+              <div className="filter-selectors-grid">
+                <CustomSelect
+                  value={statusFilter}
+                  onChange={(val) => setStatusFilter(val)}
+                  options={STATUS_FILTER_OPTIONS}
+                  size="sm"
+                />
 
-                  <CustomSelect
-                    value={sortBy}
-                    onChange={(val) => setSortBy(val as any)}
-                    options={SORT_OPTIONS}
-                    size="sm"
-                    width={165}
-                  />
-                </div>
+                <CustomSelect
+                  value={sortBy}
+                  onChange={(val) => setSortBy(val as any)}
+                  options={SORT_OPTIONS}
+                  size="sm"
+                />
               </div>
             </div>
 
