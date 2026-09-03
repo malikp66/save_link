@@ -70,8 +70,8 @@ export default function ContentCard({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
         position: 'relative',
+        borderRadius: 'var(--radius-md)',
       }}
     >
       {/* Media Thumbnail Container */}
@@ -83,6 +83,8 @@ export default function ContentCard({
           backgroundColor: '#111422',
           cursor: 'pointer',
           overflow: 'hidden',
+          borderTopLeftRadius: 'var(--radius-md)',
+          borderTopRightRadius: 'var(--radius-md)',
         }}
         onClick={() => onOpenDetail(item)}
       >

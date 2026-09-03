@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, Check } from 'lucide-react';
 
 export interface SelectOption {
@@ -32,14 +33,72 @@ export default function CustomSelect({
   id,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [coords, setCoords] = useState<{ top?: number; bottom?: number; left: number; width: number; openUpwards: boolean }>({
+    left: 0,
+    width: 0,
+    openUpwards: false,
+  });
+
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = options.find((opt) => opt.value === value);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Update floating menu coordinates
+  const updateCoords = () => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUpwards = spaceBelow < 220 && rect.top > 220;
+
+    setCoords({
+      left: rect.left,
+      width: Math.max(rect.width, 150),
+      top: openUpwards ? undefined : rect.bottom + 5,
+      bottom: openUpwards ? window.innerHeight - rect.top + 5 : undefined,
+      openUpwards,
+    });
+  };
+
+  const handleToggle = () => {
+    if (!isOpen) {
+      updateCoords();
+    }
+    setIsOpen(!isOpen);
+  };
+
+  // Reposition on scroll / resize or close
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleScrollOrResize = () => {
+      updateCoords();
+    };
+
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+
+    return () => {
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, [isOpen]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        triggerRef.current &&
+        !triggerRef.current.contains(target) &&
+        menuRef.current &&
+        !menuRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     }
@@ -68,9 +127,101 @@ export default function CustomSelect({
 
   const isSmall = size === 'sm';
 
+  // Floating Portal Menu
+  const portalMenu = mounted && isOpen ? createPortal(
+    <div
+      ref={menuRef}
+      style={{
+        position: 'fixed',
+        top: coords.top !== undefined ? `${coords.top}px` : 'auto',
+        bottom: coords.bottom !== undefined ? `${coords.bottom}px` : 'auto',
+        left: `${coords.left}px`,
+        width: `${coords.width}px`,
+        minWidth: 150,
+        zIndex: 999999,
+        background: '#121526',
+        border: '1px solid rgba(255, 255, 255, 0.14)',
+        borderRadius: 'var(--radius-md)',
+        padding: 4,
+        boxShadow: '0 16px 36px rgba(0, 0, 0, 0.85), 0 0 20px rgba(139, 92, 246, 0.25)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        maxHeight: 240,
+        overflowY: 'auto',
+        animation: 'portalDropdownFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
+      }}
+    >
+      {options.map((option) => {
+        const isSelected = option.value === value;
+        return (
+          <div
+            key={option.value}
+            onClick={() => {
+              onChange(option.value);
+              setIsOpen(false);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: isSmall ? '7px 10px' : '9px 12px',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: isSmall ? '0.75rem' : '0.82rem',
+              fontWeight: isSelected ? 700 : 500,
+              color: isSelected ? (option.color || '#c084fc') : '#f1f5f9',
+              background: isSelected ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+              cursor: 'pointer',
+              transition: 'background 0.12s ease, color 0.12s ease',
+              userSelect: 'none',
+              margin: '2px 0',
+            }}
+            onMouseEnter={(e) => {
+              if (!isSelected) {
+                (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.08)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isSelected) {
+                (e.currentTarget as HTMLElement).style.background = 'transparent';
+              }
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
+              {option.icon && (
+                <span style={{ fontSize: isSmall ? '0.85rem' : '0.95rem', display: 'flex', alignItems: 'center' }}>
+                  {option.icon}
+                </span>
+              )}
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {option.label}
+              </span>
+            </div>
+
+            {isSelected && (
+              <Check size={14} color={option.color || '#c084fc'} style={{ flexShrink: 0, marginLeft: 8 }} />
+            )}
+          </div>
+        );
+      })}
+
+      <style jsx global>{`
+        @keyframes portalDropdownFadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.97) translateY(-2px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+      `}</style>
+    </div>,
+    document.body
+  ) : null;
+
   return (
     <div
-      ref={containerRef}
       id={id}
       style={{
         position: 'relative',
@@ -81,8 +232,9 @@ export default function CustomSelect({
     >
       {/* Trigger Button */}
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         style={{
           width: '100%',
           display: 'flex',
@@ -98,8 +250,8 @@ export default function CustomSelect({
           fontWeight: 600,
           cursor: 'pointer',
           outline: 'none',
-          boxShadow: isOpen ? '0 0 12px rgba(139, 92, 246, 0.25)' : 'none',
-          transition: 'all 0.2s ease',
+          boxShadow: isOpen ? '0 0 12px rgba(139, 92, 246, 0.3)' : 'none',
+          transition: 'all 0.15s ease',
           textAlign: 'left',
         }}
       >
@@ -125,95 +277,8 @@ export default function CustomSelect({
         />
       </button>
 
-      {/* Glassmorphic Dark Popover Menu */}
-      {isOpen && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 5px)',
-            left: 0,
-            right: 0,
-            minWidth: 150,
-            zIndex: 1000,
-            background: '#121526',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            borderRadius: 'var(--radius-md)',
-            padding: 4,
-            boxShadow: '0 12px 28px rgba(0, 0, 0, 0.75), 0 0 15px rgba(139, 92, 246, 0.15)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            maxHeight: 250,
-            overflowY: 'auto',
-            animation: 'dropdownFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
-        >
-          {options.map((option) => {
-            const isSelected = option.value === value;
-            return (
-              <div
-                key={option.value}
-                onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: isSmall ? '6px 10px' : '8px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: isSmall ? '0.74rem' : '0.82rem',
-                  fontWeight: isSelected ? 700 : 500,
-                  color: isSelected ? (option.color || '#c084fc') : 'var(--text-main)',
-                  background: isSelected ? 'rgba(139, 92, 246, 0.18)' : 'transparent',
-                  cursor: 'pointer',
-                  transition: 'background 0.15s ease, color 0.15s ease',
-                  userSelect: 'none',
-                  margin: '1px 0',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isSelected) {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.07)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected) {
-                    (e.currentTarget as HTMLElement).style.background = 'transparent';
-                  }
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-                  {option.icon && (
-                    <span style={{ fontSize: isSmall ? '0.85rem' : '0.95rem', display: 'flex', alignItems: 'center' }}>
-                      {option.icon}
-                    </span>
-                  )}
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {option.label}
-                  </span>
-                </div>
-
-                {isSelected && (
-                  <Check size={14} color={option.color || '#c084fc'} style={{ flexShrink: 0, marginLeft: 8 }} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <style jsx>{`
-        @keyframes dropdownFadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-4px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+      {/* Render Portal outside the card/modal DOM hierarchy */}
+      {portalMenu}
     </div>
   );
 }
