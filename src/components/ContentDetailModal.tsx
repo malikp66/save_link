@@ -252,7 +252,114 @@ export default function ContentDetailModal({
                 minHeight: 280,
               }}>
                 {previewMode === 'embed' ? (
-                  item.platform === 'instagram' ? (
+                  item.media_type === 'profile' ? (
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '36px 20px',
+                      background: 'radial-gradient(circle at 50% 20%, rgba(236, 72, 153, 0.15), transparent 70%), #0e111a',
+                      gap: 16,
+                      textAlign: 'center',
+                    }}>
+                      <div style={{
+                        position: 'relative',
+                        width: 110,
+                        height: 110,
+                        borderRadius: '50%',
+                        padding: 3,
+                        background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+                        boxShadow: '0 8px 30px rgba(220, 39, 67, 0.35)',
+                      }}>
+                        <img
+                          src={item.author_avatar_url || item.thumbnail_url}
+                          alt={item.author_name}
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+                          }}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            background: '#131728',
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#ffffff' }}>
+                            {item.author_name || item.author_username}
+                          </h3>
+                          <span style={{ color: '#06b6d4', fontSize: '1rem' }}>✓</span>
+                        </div>
+                        <p style={{ fontSize: '0.85rem', color: '#ec4899', fontWeight: 600, margin: '4px 0 0 0' }}>
+                          @{item.author_username}
+                        </p>
+                      </div>
+
+                      {/* Profile Stats Quick Row */}
+                      <div style={{
+                        display: 'flex',
+                        gap: 16,
+                        background: 'rgba(255, 255, 255, 0.04)',
+                        padding: '12px 24px',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        marginTop: 4,
+                      }}>
+                        <div>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
+                            {item.views_count.toLocaleString()}
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                            Followers
+                          </div>
+                        </div>
+                        <div style={{ width: 1, background: 'rgba(255, 255, 255, 0.1)' }} />
+                        <div>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
+                            {item.likes_count.toLocaleString()}
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                            Posts
+                          </div>
+                        </div>
+                        <div style={{ width: 1, background: 'rgba(255, 255, 255, 0.1)' }} />
+                        <div>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
+                            {item.comments_count.toLocaleString()}
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                            Following
+                          </div>
+                        </div>
+                      </div>
+
+                      <a
+                        href={item.author_profile_url || item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-primary"
+                        style={{
+                          padding: '10px 20px',
+                          fontSize: '0.85rem',
+                          background: 'linear-gradient(45deg, #f09433, #dc2743, #bc1888)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          marginTop: 6,
+                          boxShadow: '0 4px 20px rgba(220, 39, 67, 0.4)',
+                        }}
+                      >
+                        <ExternalLink size={16} />
+                        <span>Buka Profil Resmi di Instagram ➔</span>
+                      </a>
+                    </div>
+                  ) : item.platform === 'instagram' ? (
                     <iframe 
                       src={`https://www.instagram.com/p/${item.url.match(/\/(?:p|reel)\/([A-Za-z0-9_-]+)/)?.[1] || ''}/embed/captioned/`}
                       style={{

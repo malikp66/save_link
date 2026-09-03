@@ -89,8 +89,8 @@ export async function checkSupabaseStatus(): Promise<SupabaseStatusResult> {
   }
 }
 
-const LOCAL_STORAGE_KEY_CATEGORIES = 'talentpulse_categories_v4';
-const LOCAL_STORAGE_KEY_LINKS = 'talentpulse_saved_links_v4';
+const LOCAL_STORAGE_KEY_CATEGORIES = 'talentpulse_categories_v5';
+const LOCAL_STORAGE_KEY_LINKS = 'talentpulse_saved_links_v5';
 
 // Helpers for Local Storage
 function getLocalCategories(): Category[] {
@@ -101,6 +101,7 @@ function getLocalCategories(): Category[] {
       localStorage.removeItem('talentpulse_categories_v1');
       localStorage.removeItem('talentpulse_categories_v2');
       localStorage.removeItem('talentpulse_categories_v3');
+      localStorage.removeItem('talentpulse_categories_v4');
       localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(INITIAL_CATEGORIES));
       return INITIAL_CATEGORIES;
     }
@@ -129,6 +130,7 @@ function getLocalLinks(): SavedLink[] {
       localStorage.removeItem('talentpulse_saved_links_v1');
       localStorage.removeItem('talentpulse_saved_links_v2');
       localStorage.removeItem('talentpulse_saved_links_v3');
+      localStorage.removeItem('talentpulse_saved_links_v4');
       localStorage.setItem(LOCAL_STORAGE_KEY_LINKS, JSON.stringify(INITIAL_LINKS));
       return INITIAL_LINKS;
     }
@@ -145,9 +147,11 @@ export function resetToRealUserLinks(): SavedLink[] {
     localStorage.removeItem('talentpulse_saved_links_v1');
     localStorage.removeItem('talentpulse_saved_links_v2');
     localStorage.removeItem('talentpulse_saved_links_v3');
+    localStorage.removeItem('talentpulse_saved_links_v4');
     localStorage.removeItem('talentpulse_categories_v1');
     localStorage.removeItem('talentpulse_categories_v2');
     localStorage.removeItem('talentpulse_categories_v3');
+    localStorage.removeItem('talentpulse_categories_v4');
     localStorage.setItem(LOCAL_STORAGE_KEY_LINKS, JSON.stringify(INITIAL_LINKS));
     localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(INITIAL_CATEGORIES));
   }
