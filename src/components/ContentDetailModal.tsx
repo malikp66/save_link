@@ -7,6 +7,7 @@ import {
   OutreachStatus 
 } from '@/types';
 import CustomSelect, { SelectOption } from './CustomSelect';
+import CopyUsernameBadge from './CopyUsernameBadge';
 import { 
   X, 
   ExternalLink, 
@@ -273,7 +274,13 @@ export default function ContentDetailModal({
                           alt={item.author_name}
                           referrerPolicy="no-referrer"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+                            const img = e.target as HTMLImageElement;
+                            const target = item.author_avatar_url || item.thumbnail_url;
+                            if (!img.src.includes('/api/proxy-image') && target && target.startsWith('http')) {
+                              img.src = `/api/proxy-image?url=${encodeURIComponent(target)}`;
+                            } else {
+                              img.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+                            }
                           }}
                           style={{
                             width: '100%',
@@ -292,9 +299,9 @@ export default function ContentDetailModal({
                           </h3>
                           <span style={{ color: '#06b6d4', fontSize: '1rem' }}>✓</span>
                         </div>
-                        <p style={{ fontSize: '0.85rem', color: '#ec4899', fontWeight: 600, margin: '4px 0 0 0' }}>
-                          @{item.author_username}
-                        </p>
+                        <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center' }}>
+                          <CopyUsernameBadge username={item.author_username} size="md" />
+                        </div>
                       </div>
 
                       {/* Profile Stats Quick Row */}
@@ -457,11 +464,21 @@ export default function ContentDetailModal({
                       src={item.author_avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${item.author_username}`}
                       alt={item.author_name}
                       referrerPolicy="no-referrer"
-                      style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '1px solid #8b5cf6' }}
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        if (!img.src.includes('/api/proxy-image') && item.author_avatar_url && item.author_avatar_url.startsWith('http')) {
+                          img.src = `/api/proxy-image?url=${encodeURIComponent(item.author_avatar_url)}`;
+                        } else {
+                          img.src = `https://api.dicebear.com/7.x/personas/svg?seed=${item.author_username}`;
+                        }
+                      }}
+                      style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '1px solid #8b5cf6', background: '#1a1d2e', flexShrink: 0 }}
                     />
                     <div>
                       <h4 style={{ fontSize: '0.98rem', fontWeight: 800, margin: 0 }}>{item.author_name}</h4>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--primary)', margin: 0 }}>@{item.author_username}</p>
+                      <div style={{ marginTop: 2 }}>
+                        <CopyUsernameBadge username={item.author_username} size="sm" />
+                      </div>
                     </div>
                   </div>
 

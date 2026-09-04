@@ -14,6 +14,13 @@ import ProfileDetailModal from '@/components/ProfileDetailModal';
 import SupabaseAlertBanner from '@/components/SupabaseAlertBanner';
 import CustomSelect, { SelectOption } from '@/components/CustomSelect';
 import LoginPage from '@/components/LoginPage';
+import SplashScreen from '@/components/SplashScreen';
+import { 
+  ContentGridSkeleton, 
+  ProfilesViewSkeleton, 
+  AnalyticsViewSkeleton, 
+  OutreachCrmSkeleton 
+} from '@/components/skeletons';
 import { aggregateCreatorProfiles } from '@/lib/profileAggregator';
 import { 
   SavedLink, 
@@ -272,12 +279,29 @@ export default function Home() {
     }
   };
 
+  const [isInitialSplash, setIsInitialSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialSplash(false);
+    }, 1100);
+    return () => clearTimeout(timer);
+  }, []);
+
   if (!isAuthenticated) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <>
+        <SplashScreen isLoading={isInitialSplash} minDuration={900} />
+        <LoginPage onLoginSuccess={handleLoginSuccess} />
+      </>
+    );
   }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* App Splash Screen */}
+      <SplashScreen isLoading={loading || isInitialSplash} minDuration={900} />
+
       {/* Header */}
       <Header
         activeTab={activeTab}
@@ -528,6 +552,8 @@ export default function Home() {
                   </button>
                 </div>
               </div>
+            ) : loading ? (
+              <ContentGridSkeleton count={8} />
             ) : (
               <div className="content-grid">
                 {filteredLinks.map((link) => {
@@ -554,30 +580,42 @@ export default function Home() {
 
         {/* TAB 2: CREATOR PROFILES & DIRECTORY */}
         {activeTab === 'profiles' && (
-          <ProfilesView
-            profiles={creatorProfiles}
-            categories={categories}
-            onSelectProfile={(p) => setSelectedProfile(p)}
-            onUpdateStatus={async (linkIds, status) => {
-              for (const id of linkIds) {
-                await handleUpdateStatus(id, status);
-              }
-            }}
-          />
+          loading ? (
+            <ProfilesViewSkeleton />
+          ) : (
+            <ProfilesView
+              profiles={creatorProfiles}
+              categories={categories}
+              onSelectProfile={(p) => setSelectedProfile(p)}
+              onUpdateStatus={async (linkIds, status) => {
+                for (const id of linkIds) {
+                  await handleUpdateStatus(id, status);
+                }
+              }}
+            />
+          )
         )}
 
         {/* TAB 3: DEEP ANALYTICS & TRENDS */}
         {activeTab === 'analytics' && (
-          <AnalyticsView links={links} categories={categories} />
+          loading ? (
+            <AnalyticsViewSkeleton />
+          ) : (
+            <AnalyticsView links={links} categories={categories} />
+          )
         )}
 
         {/* TAB 4: TALENT OUTREACH CRM */}
         {activeTab === 'crm' && (
-          <OutreachCrmView
-            links={links}
-            onUpdateStatus={handleUpdateStatus}
-            onOpenDetail={(item) => setSelectedDetailItem(item)}
-          />
+          loading ? (
+            <OutreachCrmSkeleton />
+          ) : (
+            <OutreachCrmView
+              links={links}
+              onUpdateStatus={handleUpdateStatus}
+              onOpenDetail={(item) => setSelectedDetailItem(item)}
+            />
+          )
         )}
       </main>
 

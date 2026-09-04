@@ -163,39 +163,66 @@ async function parseInstagram(rawUrl: string, cleanUrl: string): Promise<ParsedL
   // Detect if this is a PROFILE link (not a post/reel)
   const isProfileLink = !isReel && !isPost && !shortcode;
 
-  let username = 'ig_creator';
+  let username = '';
   const usernameMatch = rawUrl.match(/instagram\.com\/([^/?#]+)/);
   if (usernameMatch && !['reel', 'reels', 'p', 'stories', 'explore'].includes(usernameMatch[1])) {
     username = usernameMatch[1];
   }
 
-  // Try scraping OpenGraph metadata from Instagram
+  // Helper to fetch OpenGraph metadata with user agents
+  const fetchOgMeta = async (targetUrl: string) => {
+    const userAgents = [
+      'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+      'Twitterbot/1.0',
+      'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+    ];
+
+    for (const ua of userAgents) {
+      try {
+        const res = await fetch(targetUrl, {
+          headers: {
+            'User-Agent': ua,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+          },
+          signal: AbortSignal.timeout(6000),
+        });
+
+        if (res.ok) {
+          const html = await res.text();
+          const titleMatch = html.match(/<meta property=["']og:title["'] content=["']([^"']+)["']/i) || html.match(/<title>([^<]+)<\/title>/i);
+          const descMatch = html.match(/<meta property=["']og:description["'] content=["']([^"']+)["']/i);
+          const imageMatch = html.match(/<meta property=["']og:image["'] content=["']([^"']+)["']/i);
+
+          const ogTitle = titleMatch ? decodeHtmlEntities(titleMatch[1]) : '';
+          const ogDesc = descMatch ? decodeHtmlEntities(descMatch[1]) : '';
+          const ogImage = imageMatch ? decodeHtmlEntities(imageMatch[1]) : '';
+
+          if (ogImage || ogTitle || ogDesc) {
+            return { ogTitle, ogDesc, ogImage, html };
+          }
+        }
+      } catch (err) {
+        // try next user agent
+      }
+    }
+    return null;
+  };
+
   try {
     const fetchUrl = isProfileLink 
       ? `https://www.instagram.com/${username}/`
       : cleanUrl;
 
-    const res = await fetch(fetchUrl, {
-      headers: {
-        'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
-      },
-      signal: AbortSignal.timeout(6000),
-    });
+    const ogData = await fetchOgMeta(fetchUrl);
 
-    if (res.ok) {
-      const html = await res.text();
-      const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
-      const descMatch = html.match(/<meta property="og:description" content="([^"]+)"/i);
-      const imageMatch = html.match(/<meta property="og:image" content="([^"]+)"/i);
-
-      const ogTitle = titleMatch ? decodeHtmlEntities(titleMatch[1]) : '';
-      const ogDesc = descMatch ? decodeHtmlEntities(descMatch[1]) : '';
-      const ogImage = imageMatch ? imageMatch[1] : '';
+    if (ogData) {
+      const { ogTitle, ogDesc, ogImage } = ogData;
 
       if (isProfileLink) {
         // === PROFILE LINK: extract real profile data ===
         const displayNameMatch = ogTitle.match(/^(.+?)\s*\(@/);
-        const displayName = displayNameMatch ? displayNameMatch[1].trim() : username;
+        const displayName = displayNameMatch ? displayNameMatch[1].trim() : (username || 'Instagram Creator');
 
         // Parse follower/following/posts from description
         const followersMatch = ogDesc.match(/([\d,.]+[KMkm]?)\s*Followers/i);
@@ -205,15 +232,16 @@ async function parseInstagram(rawUrl: string, cleanUrl: string): Promise<ParsedL
         const followersStr = followersMatch ? followersMatch[1] : '0';
         const followersCount = parseCountString(followersStr);
         const postsCount = postsMatch ? parseInt(postsMatch[1].replace(/,/g, '')) : 0;
+        const followingCount = followingMatch ? parseCountString(followingMatch[1]) : 0;
 
         // Profile picture is the og:image for profile pages
-        const profilePic = ogImage || `https://api.dicebear.com/7.x/personas/svg?seed=${username}`;
+        const profilePic = ogImage || `https://api.dicebear.com/7.x/personas/svg?seed=${username || 'creator'}`;
 
         return {
           platform: 'instagram',
           url: `https://www.instagram.com/${username}/`,
           media_type: 'profile',
-          author_username: username,
+          author_username: username || 'ig_creator',
           author_name: displayName,
           author_avatar_url: profilePic,
           author_profile_url: `https://www.instagram.com/${username}/`,
@@ -224,74 +252,69 @@ async function parseInstagram(rawUrl: string, cleanUrl: string): Promise<ParsedL
           hashtags: [],
           views_count: followersCount,
           likes_count: postsCount,
-          comments_count: parseInt((followingMatch ? followingMatch[1] : '0').replace(/,/g, '')),
+          comments_count: followingCount,
           shares_count: 0,
         };
       } else {
         // === CONTENT LINK (post/reel): extract content data ===
-        const title = ogDesc || ogTitle || `Instagram ${isReel ? 'Reels' : 'Post'}`;
-
-        // Also try to get the creator's profile picture  
-        let avatarUrl = `https://api.dicebear.com/7.x/personas/svg?seed=${username}`;
+        // Extract true author username from ogDesc or ogTitle
+        const userMatch = ogDesc.match(/(?:-\s*|^)([a-zA-Z0-9._]+)\s*(?:on\s+[A-Za-z]+|\:)/i)
+          || ogDesc.match(/from\s+([a-zA-Z0-9._]+)\s*\(@/i)
+          || ogTitle.match(/\(@([a-zA-Z0-9._]+)\)/i);
         
-        // Attempt to fetch profile page for avatar
-        try {
-          const profileRes = await fetch(`https://www.instagram.com/${username}/`, {
-            headers: {
-              'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
-            },
-            signal: AbortSignal.timeout(4000),
-          });
-          if (profileRes.ok) {
-            const profileHtml = await profileRes.text();
-            const profileImgMatch = profileHtml.match(/<meta property="og:image" content="([^"]+)"/i);
-            const profileTitleMatch = profileHtml.match(/<meta property="og:title" content="([^"]+)"/i);
-            if (profileImgMatch) avatarUrl = profileImgMatch[1];
-            
-            // Extract display name from profile
-            if (profileTitleMatch) {
-              const nameMatch = decodeHtmlEntities(profileTitleMatch[1]).match(/^(.+?)\s*\(@/);
-              if (nameMatch) {
-                return {
-                  platform: 'instagram',
-                  url: cleanUrl,
-                  media_type: isReel ? 'reel' : 'post',
-                  author_username: username,
-                  author_name: nameMatch[1].trim(),
-                  author_avatar_url: avatarUrl,
-                  author_profile_url: `https://www.instagram.com/${username}/`,
-                  title: title,
-                  thumbnail_url: ogImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
-                  audio_title: 'Original Audio',
-                  audio_author: nameMatch[1].trim(),
-                  hashtags: extractHashtags(title),
-                  views_count: Math.floor(Math.random() * 250000) + 30000,
-                  likes_count: Math.floor(Math.random() * 25000) + 2000,
-                  comments_count: Math.floor(Math.random() * 800) + 50,
-                  shares_count: Math.floor(Math.random() * 1200) + 80,
-                };
-              }
+        const detectedUser = userMatch ? userMatch[1] : (username || (shortcode ? `creator_${shortcode.substring(0, 6)}` : 'ig_creator'));
+
+        // Extract author display name from ogTitle
+        const nameMatch = ogTitle.match(/^(.+?)\s*(?:\(@[a-zA-Z0-9._]+\))?\s*on Instagram/i)
+          || ogTitle.match(/^(.+?)\s*\(@/i);
+        const authorName = nameMatch ? nameMatch[1].trim() : detectedUser.replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+        // Extract metrics from ogDesc: e.g. "1,444 likes, 84 comments - ..."
+        const likesMatch = ogDesc.match(/([\d,.]+[KMkm]?)\s*likes/i);
+        const commentsMatch = ogDesc.match(/([\d,.]+[KMkm]?)\s*comments/i);
+        const likesCount = likesMatch ? parseCountString(likesMatch[1]) : Math.floor(Math.random() * 25000) + 2000;
+        const commentsCount = commentsMatch ? parseCountString(commentsMatch[1]) : Math.floor(Math.random() * 800) + 50;
+        const viewsCount = Math.max(likesCount * 8, Math.floor(Math.random() * 250000) + 30000);
+
+        // Extract caption snippet: after "date: " or fallback to ogTitle
+        const captionMatch = ogDesc.match(/:\s*["“]?([^"”]+)["”]?/);
+        const title = captionMatch ? captionMatch[1].trim() : (ogDesc || ogTitle || `Instagram ${isReel ? 'Reel' : 'Post'} @${detectedUser}`);
+
+        // Extract hashtags
+        const hashtags = extractHashtags(title);
+
+        // Fetch creator's real profile picture using the detected real username
+        let avatarUrl = `https://api.dicebear.com/7.x/personas/svg?seed=${detectedUser}`;
+        if (detectedUser && detectedUser !== 'ig_creator' && !detectedUser.startsWith('creator_')) {
+          try {
+            const profileOg = await fetchOgMeta(`https://www.instagram.com/${detectedUser}/`);
+            if (profileOg && profileOg.ogImage) {
+              avatarUrl = profileOg.ogImage;
             }
+          } catch (e) {
+            console.warn(`Could not fetch profile pic for ${detectedUser}:`, e);
           }
-        } catch {}
+        }
+
+        const postImage = ogImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
 
         return {
           platform: 'instagram',
           url: cleanUrl,
           media_type: isReel ? 'reel' : 'post',
-          author_username: username,
-          author_name: username.replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+          author_username: detectedUser,
+          author_name: authorName,
           author_avatar_url: avatarUrl,
-          author_profile_url: `https://www.instagram.com/${username}/`,
-          title: title || `Instagram ${isReel ? 'Reel' : 'Post'} @${username}`,
-          thumbnail_url: ogImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
+          author_profile_url: `https://www.instagram.com/${detectedUser}/`,
+          title: title,
+          thumbnail_url: postImage,
           audio_title: 'Original Audio',
-          audio_author: username,
-          hashtags: extractHashtags(title),
-          views_count: Math.floor(Math.random() * 250000) + 30000,
-          likes_count: Math.floor(Math.random() * 25000) + 2000,
-          comments_count: Math.floor(Math.random() * 800) + 50,
-          shares_count: Math.floor(Math.random() * 1200) + 80,
+          audio_author: authorName,
+          hashtags,
+          views_count: viewsCount,
+          likes_count: likesCount,
+          comments_count: commentsCount,
+          shares_count: Math.floor(commentsCount * 1.5),
         };
       }
     }
@@ -299,19 +322,20 @@ async function parseInstagram(rawUrl: string, cleanUrl: string): Promise<ParsedL
     console.warn('Instagram fetch failed, using smart fallback:', e);
   }
 
-  // Fallback
+  // Fallback if all network requests fail
+  const fallbackUser = username || (shortcode ? `creator_${shortcode.substring(0, 6)}` : 'ig_creator');
   return {
     platform: 'instagram',
     url: cleanUrl,
     media_type: isProfileLink ? 'profile' : (isReel ? 'reel' : 'post'),
-    author_username: username,
-    author_name: username.replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-    author_avatar_url: `https://api.dicebear.com/7.x/personas/svg?seed=${username}`,
-    author_profile_url: `https://www.instagram.com/${username}/`,
-    title: isProfileLink ? `Profil Instagram @${username}` : `Instagram ${isReel ? 'Reel' : 'Post'} @${username}`,
+    author_username: fallbackUser,
+    author_name: fallbackUser.replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    author_avatar_url: `https://api.dicebear.com/7.x/personas/svg?seed=${fallbackUser}`,
+    author_profile_url: `https://www.instagram.com/${fallbackUser}/`,
+    title: isProfileLink ? `Profil Instagram @${fallbackUser}` : `Instagram ${isReel ? 'Reel' : 'Post'} @${fallbackUser}`,
     thumbnail_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
     audio_title: 'Original Instagram Audio',
-    audio_author: username,
+    audio_author: fallbackUser,
     hashtags: [],
     views_count: 50000,
     likes_count: 5000,

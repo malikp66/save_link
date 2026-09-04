@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { CreatorProfile, SavedLink, Category, OutreachStatus, Platform } from '@/types';
 import CustomSelect, { SelectOption } from './CustomSelect';
+import CopyUsernameBadge from './CopyUsernameBadge';
 import { 
   Users2, 
   Search, 
@@ -384,6 +385,14 @@ export default function ProfilesView({
                     src={profile.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${profile.username}`}
                     alt={profile.name}
                     referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      if (!img.src.includes('/api/proxy-image') && profile.avatar_url && profile.avatar_url.startsWith('http')) {
+                        img.src = `/api/proxy-image?url=${encodeURIComponent(profile.avatar_url)}`;
+                      } else {
+                        img.src = `https://api.dicebear.com/7.x/personas/svg?seed=${profile.username}`;
+                      }
+                    }}
                     style={{
                       width: 52,
                       height: 52,
@@ -431,16 +440,9 @@ export default function ProfilesView({
                     </span>
                   </div>
 
-                  <p style={{
-                    fontSize: '0.78rem',
-                    color: 'var(--text-muted)',
-                    margin: '2px 0 6px 0',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    @{profile.username}
-                  </p>
+                  <div style={{ margin: '3px 0 6px 0' }} onClick={(e) => e.stopPropagation()}>
+                    <CopyUsernameBadge username={profile.username} size="xs" />
+                  </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     {profile.talent_type && (

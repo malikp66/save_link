@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { ToastProvider } from '@/context/ToastContext';
 
 export const metadata: Metadata = {
   title: 'TalentPulse | IG & TikTok Content Intelligence & Talent CRM',
@@ -35,7 +36,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
 
         {/* Service Worker Registration for PWA */}
         <script

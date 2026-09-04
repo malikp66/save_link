@@ -7,6 +7,7 @@ import {
   OutreachStatus 
 } from '@/types';
 import CustomSelect, { SelectOption } from './CustomSelect';
+import CopyUsernameBadge from './CopyUsernameBadge';
 import { 
   Heart, 
   Eye, 
@@ -94,6 +95,9 @@ export default function ContentCard({
         }}
         onClick={() => onOpenDetail(item)}
       >
+        {/* Background shimmer placeholder while image loads */}
+        <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+
         {item.thumbnail_url ? (
           <img 
             src={item.thumbnail_url} 
@@ -110,8 +114,12 @@ export default function ContentCard({
             }}
             loading="lazy"
             onError={(e) => {
-              // fallback portrait if broken link
-              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+              const img = e.target as HTMLImageElement;
+              if (!img.src.includes('/api/proxy-image') && item.thumbnail_url && item.thumbnail_url.startsWith('http')) {
+                img.src = `/api/proxy-image?url=${encodeURIComponent(item.thumbnail_url)}`;
+              } else {
+                img.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+              }
             }}
           />
         ) : (
@@ -196,35 +204,48 @@ export default function ContentCard({
               src={item.author_avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${item.author_username}`} 
               alt={item.author_name}
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                const img = e.target as HTMLImageElement;
+                if (!img.src.includes('/api/proxy-image') && item.author_avatar_url && item.author_avatar_url.startsWith('http')) {
+                  img.src = `/api/proxy-image?url=${encodeURIComponent(item.author_avatar_url)}`;
+                } else {
+                  img.src = `https://api.dicebear.com/7.x/personas/svg?seed=${item.author_username}`;
+                }
+              }}
               style={{
-                width: 32,
-                height: 32,
+                width: 34,
+                height: 34,
                 borderRadius: '50%',
                 objectFit: 'cover',
                 border: '1px solid var(--border-subtle)',
+                background: '#1a1d2e',
+                flexShrink: 0,
               }}
             />
-            <div style={{ overflow: 'hidden' }}>
-              <a 
-                href={item.author_profile_url || item.url} 
-                target="_blank" 
-                rel="noreferrer"
-                style={{ 
-                  fontSize: '0.84rem', 
-                  fontWeight: 700, 
-                  color: 'var(--text-main)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-                title={item.author_name}
-              >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  @{item.author_username}
-                </span>
-                <ExternalLink size={11} color="var(--text-dim)" />
-              </a>
-              <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <CopyUsernameBadge username={item.author_username} size="sm" />
+                <a 
+                  href={item.author_profile_url || item.url} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  title={`Buka Profil Asli @${item.author_username}`}
+                  style={{ 
+                    color: 'var(--text-dim)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: 3,
+                    borderRadius: 4,
+                    transition: 'color 0.15s ease',
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#38bdf8')}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-dim)')}
+                >
+                  <ExternalLink size={11} />
+                </a>
+              </div>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
                 {item.author_name}
               </p>
             </div>

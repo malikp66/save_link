@@ -89,8 +89,8 @@ export async function checkSupabaseStatus(): Promise<SupabaseStatusResult> {
   }
 }
 
-const LOCAL_STORAGE_KEY_CATEGORIES = 'talentpulse_categories_v5';
-const LOCAL_STORAGE_KEY_LINKS = 'talentpulse_saved_links_v5';
+const LOCAL_STORAGE_KEY_CATEGORIES = 'talentpulse_categories_v6';
+const LOCAL_STORAGE_KEY_LINKS = 'talentpulse_saved_links_v6';
 
 // Helpers for Local Storage
 function getLocalCategories(): Category[] {
@@ -98,10 +98,9 @@ function getLocalCategories(): Category[] {
   try {
     const data = localStorage.getItem(LOCAL_STORAGE_KEY_CATEGORIES);
     if (!data) {
-      localStorage.removeItem('talentpulse_categories_v1');
-      localStorage.removeItem('talentpulse_categories_v2');
-      localStorage.removeItem('talentpulse_categories_v3');
-      localStorage.removeItem('talentpulse_categories_v4');
+      ['v1', 'v2', 'v3', 'v4', 'v5'].forEach(v => {
+        localStorage.removeItem(`talentpulse_categories_${v}`);
+      });
       localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(INITIAL_CATEGORIES));
       return INITIAL_CATEGORIES;
     }
@@ -127,14 +126,42 @@ function getLocalLinks(): SavedLink[] {
   try {
     const data = localStorage.getItem(LOCAL_STORAGE_KEY_LINKS);
     if (!data) {
-      localStorage.removeItem('talentpulse_saved_links_v1');
-      localStorage.removeItem('talentpulse_saved_links_v2');
-      localStorage.removeItem('talentpulse_saved_links_v3');
-      localStorage.removeItem('talentpulse_saved_links_v4');
+      ['v1', 'v2', 'v3', 'v4', 'v5'].forEach(v => {
+        localStorage.removeItem(`talentpulse_saved_links_${v}`);
+      });
       localStorage.setItem(LOCAL_STORAGE_KEY_LINKS, JSON.stringify(INITIAL_LINKS));
       return INITIAL_LINKS;
     }
     const parsed = JSON.parse(data);
+    // Ensure any newly resolved real photos from INITIAL_LINKS are reflected if stored link has placeholders
+    if (Array.isArray(parsed)) {
+      let hasUpdates = false;
+      const initialMap = new Map(INITIAL_LINKS.map(l => [l.id, l]));
+      const upgraded = parsed.map(item => {
+        const initial = initialMap.get(item.id);
+        if (initial) {
+          // If stored link has dicebear or unsplash but initial has real photo, upgrade
+          const needsAvatarUpdate = item.author_avatar_url?.includes('dicebear') && !initial.author_avatar_url?.includes('dicebear');
+          const needsThumbUpdate = item.thumbnail_url?.includes('unsplash') && !initial.thumbnail_url?.includes('unsplash');
+          if (needsAvatarUpdate || needsThumbUpdate) {
+            hasUpdates = true;
+            return {
+              ...item,
+              author_avatar_url: needsAvatarUpdate ? initial.author_avatar_url : item.author_avatar_url,
+              thumbnail_url: needsThumbUpdate ? initial.thumbnail_url : item.thumbnail_url,
+              author_username: initial.author_username !== 'ig_creator' ? initial.author_username : item.author_username,
+              author_name: initial.author_name || item.author_name,
+            };
+          }
+        }
+        return item;
+      });
+
+      if (hasUpdates) {
+        localStorage.setItem(LOCAL_STORAGE_KEY_LINKS, JSON.stringify(upgraded));
+        return upgraded;
+      }
+    }
     return parsed;
   } catch (e) {
     console.error('Error reading links from localStorage:', e);
@@ -144,14 +171,10 @@ function getLocalLinks(): SavedLink[] {
 
 export function resetToRealUserLinks(): SavedLink[] {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('talentpulse_saved_links_v1');
-    localStorage.removeItem('talentpulse_saved_links_v2');
-    localStorage.removeItem('talentpulse_saved_links_v3');
-    localStorage.removeItem('talentpulse_saved_links_v4');
-    localStorage.removeItem('talentpulse_categories_v1');
-    localStorage.removeItem('talentpulse_categories_v2');
-    localStorage.removeItem('talentpulse_categories_v3');
-    localStorage.removeItem('talentpulse_categories_v4');
+    ['v1', 'v2', 'v3', 'v4', 'v5', 'v6'].forEach(v => {
+      localStorage.removeItem(`talentpulse_saved_links_${v}`);
+      localStorage.removeItem(`talentpulse_categories_${v}`);
+    });
     localStorage.setItem(LOCAL_STORAGE_KEY_LINKS, JSON.stringify(INITIAL_LINKS));
     localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(INITIAL_CATEGORIES));
   }

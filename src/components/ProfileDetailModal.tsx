@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { CreatorProfile, SavedLink, OutreachStatus, Category } from '@/types';
 import CustomSelect, { SelectOption } from './CustomSelect';
+import CopyUsernameBadge from './CopyUsernameBadge';
 import { 
   X, 
   ExternalLink, 
@@ -188,6 +189,14 @@ export default function ProfileDetailModal({
                   src={profile.avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${profile.username}`}
                   alt={profile.name}
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    if (!img.src.includes('/api/proxy-image') && profile.avatar_url && profile.avatar_url.startsWith('http')) {
+                      img.src = `/api/proxy-image?url=${encodeURIComponent(profile.avatar_url)}`;
+                    } else {
+                      img.src = `https://api.dicebear.com/7.x/personas/svg?seed=${profile.username}`;
+                    }
+                  }}
                   style={{
                     width: 72,
                     height: 72,
@@ -251,9 +260,9 @@ export default function ProfileDetailModal({
                   )}
                 </div>
 
-                <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', marginTop: 3 }}>
-                  @{profile.username}
-                </p>
+                <div style={{ marginTop: 5 }}>
+                  <CopyUsernameBadge username={profile.username} size="sm" />
+                </div>
 
                 {/* Direct Link to Social Profile */}
                 <a

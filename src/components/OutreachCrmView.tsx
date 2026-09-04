@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { SavedLink, OutreachStatus } from '@/types';
+import CopyUsernameBadge from './CopyUsernameBadge';
 import { 
   Send, 
   Phone, 
@@ -179,13 +180,22 @@ export default function OutreachCrmView({
                             <img
                               src={item.author_avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${item.author_username}`}
                               alt={item.author_name}
-                              style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover' }}
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                if (!img.src.includes('/api/proxy-image') && item.author_avatar_url && item.author_avatar_url.startsWith('http')) {
+                                  img.src = `/api/proxy-image?url=${encodeURIComponent(item.author_avatar_url)}`;
+                                } else {
+                                  img.src = `https://api.dicebear.com/7.x/personas/svg?seed=${item.author_username}`;
+                                }
+                              }}
+                              style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
                             />
                             <div style={{ overflow: 'hidden' }}>
-                              <p style={{ fontSize: '0.82rem', fontWeight: 700, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                              <p style={{ fontSize: '0.82rem', fontWeight: 700, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', margin: '0 0 2px 0' }}>
                                 {item.author_name}
                               </p>
-                              <p style={{ fontSize: '0.7rem', color: 'var(--primary)' }}>@{item.author_username}</p>
+                              <CopyUsernameBadge username={item.author_username} size="xs" />
                             </div>
                           </div>
 
@@ -209,6 +219,15 @@ export default function OutreachCrmView({
                           <img
                             src={item.thumbnail_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}
                             alt=""
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              if (!img.src.includes('/api/proxy-image') && item.thumbnail_url && item.thumbnail_url.startsWith('http')) {
+                                img.src = `/api/proxy-image?url=${encodeURIComponent(item.thumbnail_url)}`;
+                              } else {
+                                img.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80';
+                              }
+                            }}
                             style={{ width: 45, height: 55, borderRadius: 4, objectFit: 'cover' }}
                           />
                           <div style={{ flex: 1, overflow: 'hidden' }}>
