@@ -18,7 +18,8 @@ import {
   Send, 
   Music,
   Trash2,
-  TrendingUp
+  TrendingUp,
+  Pencil
 } from 'lucide-react';
 
 const OUTREACH_OPTIONS: SelectOption[] = [
@@ -33,8 +34,10 @@ const OUTREACH_OPTIONS: SelectOption[] = [
 interface ContentCardProps {
   item: SavedLink;
   category?: Category;
+  categories?: Category[];
   onOpenDetail: (item: SavedLink) => void;
   onUpdateStatus: (id: string, status: OutreachStatus) => void;
+  onUpdateCategory?: (id: string, categoryId: string | null) => void;
   onDelete: (id: string) => void;
   onOpenCreatorProfile?: (username: string) => void;
 }
@@ -51,8 +54,10 @@ const STATUS_LABELS: Record<OutreachStatus, { label: string; className: string }
 export default function ContentCard({
   item,
   category,
+  categories,
   onOpenDetail,
   onUpdateStatus,
+  onUpdateCategory,
   onDelete,
   onOpenCreatorProfile,
 }: ContentCardProps) {
@@ -340,7 +345,21 @@ export default function ContentCard({
             </span>
           )}
 
-          {category && (
+          {categories && categories.length > 0 && onUpdateCategory ? (
+            <div onClick={(e) => e.stopPropagation()} style={{ display: 'inline-flex' }}>
+              <CustomSelect
+                value={item.category_id || ''}
+                onChange={(catId) => onUpdateCategory(item.id, catId ? catId : null)}
+                options={[
+                  { value: '', label: 'Tanpa Kategori', color: '#94a3b8' },
+                  ...categories.map((c) => ({ value: c.id, label: c.name, color: c.color })),
+                ]}
+                placeholder="+ Kategori"
+                size="sm"
+                width={125}
+              />
+            </div>
+          ) : category ? (
             <span style={{
               fontSize: '0.7rem',
               fontWeight: 600,
@@ -352,7 +371,7 @@ export default function ContentCard({
             }}>
               {category.name}
             </span>
-          )}
+          ) : null}
 
           {item.hook_type && (
             <span style={{
@@ -411,8 +430,32 @@ export default function ContentCard({
             width={130}
           />
 
-          {/* Action buttons: DM & Delete */}
+          {/* Action buttons: Edit, DM & Delete */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button
+              onClick={() => onOpenDetail(item)}
+              title="Edit Konten & Kategori"
+              style={{
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                background: 'rgba(6, 182, 212, 0.12)',
+                color: '#22d3ee',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                border: '1px solid rgba(6, 182, 212, 0.28)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = 'rgba(6, 182, 212, 0.22)')}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'rgba(6, 182, 212, 0.12)')}
+            >
+              <Pencil size={11} />
+              <span>Edit</span>
+            </button>
+
             <a
               href={item.author_profile_url || item.url}
               target="_blank"

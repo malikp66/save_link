@@ -15,6 +15,7 @@ import SupabaseAlertBanner from '@/components/SupabaseAlertBanner';
 import CustomSelect, { SelectOption } from '@/components/CustomSelect';
 import LoginPage from '@/components/LoginPage';
 import SplashScreen from '@/components/SplashScreen';
+import { useToast } from '@/context/ToastContext';
 import { 
   ContentGridSkeleton, 
   ProfilesViewSkeleton, 
@@ -73,6 +74,8 @@ import {
 } from 'lucide-react';
 
 export default function Home() {
+  const { showToast } = useToast();
+
   // Auth state with synchronous initialization
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -186,10 +189,20 @@ export default function Home() {
     }
   };
 
+  const handleUpdateCategory = async (id: string, categoryId: string | null) => {
+    const updated = await updateSavedLink(id, { category_id: categoryId });
+    if (updated) {
+      setLinks((prev) => prev.map((l) => (l.id === id ? updated : l)));
+      const catObj = categories.find((c) => c.id === categoryId);
+      showToast(catObj ? `Kategori diubah: "${catObj.name}"` : 'Kategori dilepas', 'success');
+    }
+  };
+
   const handleUpdateStatus = async (id: string, status: OutreachStatus) => {
     const updated = await updateOutreachStatus(id, status);
     if (updated) {
       setLinks((prev) => prev.map((l) => (l.id === id ? updated : l)));
+      showToast('Status outreach berhasil diperbarui!', 'info');
     }
   };
 
@@ -563,8 +576,10 @@ export default function Home() {
                       key={link.id}
                       item={link}
                       category={cat}
+                      categories={categories}
                       onOpenDetail={(item) => setSelectedDetailItem(item)}
                       onUpdateStatus={handleUpdateStatus}
+                      onUpdateCategory={handleUpdateCategory}
                       onDelete={handleDeleteLink}
                       onOpenCreatorProfile={(username) => {
                         const prof = creatorProfiles.find(p => p.username.toLowerCase() === username.toLowerCase());

@@ -8,6 +8,7 @@ import {
 } from '@/types';
 import CustomSelect, { SelectOption } from './CustomSelect';
 import CopyUsernameBadge from './CopyUsernameBadge';
+import { useToast } from '@/context/ToastContext';
 import { 
   X, 
   ExternalLink, 
@@ -23,7 +24,14 @@ import {
   Music, 
   Tag, 
   Clock,
-  Save
+  Save,
+  Edit3,
+  Sliders,
+  ChevronDown,
+  ChevronUp,
+  Hash,
+  User,
+  Image as ImageIcon
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -65,30 +73,58 @@ export default function ContentDetailModal({
   onDelete,
   onOpenCreatorProfile,
 }: ContentDetailModalProps) {
+  const { showToast } = useToast();
+
   const [formData, setFormData] = useState({
     title: item.title || '',
     category_id: item.category_id || '',
     talent_type: item.talent_type || 'Lokal / Indo',
-    outreach_status: item.outreach_status,
-    rating: item.rating || 0,
     hook_type: item.hook_type || 'GRWM',
+    tags: (item.tags || []).join(', '),
+    hashtags: (item.hashtags || []).join(', '),
+    author_name: item.author_name || '',
+    author_username: item.author_username || '',
+    author_profile_url: item.author_profile_url || '',
+    author_avatar_url: item.author_avatar_url || '',
+    thumbnail_url: item.thumbnail_url || '',
+    audio_title: item.audio_title || '',
+    audio_author: item.audio_author || '',
     views_count: item.views_count || 0,
     likes_count: item.likes_count || 0,
     comments_count: item.comments_count || 0,
     shares_count: item.shares_count || 0,
+    rating: item.rating || 0,
+    outreach_status: item.outreach_status,
     contact_phone: item.contact_phone || '',
     contact_email: item.contact_email || '',
     contact_notes: item.contact_notes || '',
   });
 
+  const [showMediaEditor, setShowMediaEditor] = useState(false);
   const [isSavedAlert, setIsSavedAlert] = useState(false);
   const [previewMode, setPreviewMode] = useState<'embed' | 'photo'>('embed');
 
-  // Recalculate engagement rate
+  // Recalculate engagement rate in real-time
   const calcER = (likes: number, comments: number, shares: number, views: number) => {
     if (!views || views <= 0) return 0;
     return Number((((likes + comments + shares) / views) * 100).toFixed(2));
   };
+
+  const currentER = calcER(
+    Number(formData.likes_count),
+    Number(formData.comments_count),
+    Number(formData.shares_count),
+    Number(formData.views_count)
+  );
+
+  const categoryOptions: SelectOption[] = [
+    { value: '', label: 'Tanpa Kategori (Unassigned)', color: '#94a3b8' },
+    ...categories.map((c) => ({
+      value: c.id,
+      label: c.name,
+      color: c.color,
+    })),
+  ];
 
   const handleStatusChange = (newStatus: OutreachStatus) => {
     setFormData((prev) => ({ ...prev, outreach_status: newStatus }));
@@ -110,20 +146,48 @@ export default function ContentDetailModal({
       Number(formData.views_count)
     );
 
+    const parsedTags = formData.tags
+      ? formData.tags.split(',').map((t) => t.trim()).filter(Boolean)
+      : [];
+    const parsedHashtags = formData.hashtags
+      ? formData.hashtags
+          .split(',')
+          .map((h) => h.trim().replace(/^#*/, '#'))
+          .filter((h) => h.length > 1)
+      : [];
+
     onSave(item.id, {
-      ...formData,
+      title: formData.title,
+      category_id: formData.category_id ? formData.category_id : null,
+      talent_type: formData.talent_type,
+      hook_type: formData.hook_type,
+      tags: parsedTags,
+      hashtags: parsedHashtags,
+      author_name: formData.author_name.trim() || item.author_name,
+      author_username: formData.author_username.trim().replace(/^@/, '') || item.author_username,
+      author_profile_url: formData.author_profile_url.trim() || item.author_profile_url,
+      author_avatar_url: formData.author_avatar_url.trim() || item.author_avatar_url,
+      thumbnail_url: formData.thumbnail_url.trim() || item.thumbnail_url,
+      audio_title: formData.audio_title.trim() || item.audio_title,
+      audio_author: formData.audio_author.trim() || item.audio_author,
       views_count: Number(formData.views_count),
       likes_count: Number(formData.likes_count),
       comments_count: Number(formData.comments_count),
       shares_count: Number(formData.shares_count),
       engagement_rate: er,
+      rating: formData.rating,
+      outreach_status: formData.outreach_status,
+      contact_phone: formData.contact_phone.trim(),
+      contact_email: formData.contact_email.trim(),
+      contact_notes: formData.contact_notes.trim(),
     });
 
+    showToast('Perubahan konten berhasil disimpan!', 'success');
     setIsSavedAlert(true);
     setTimeout(() => {
       setIsSavedAlert(false);
       onClose();
-    }, 600);
+    }, 450);
   };
 
   // WhatsApp touch-up greeting generator
@@ -131,18 +195,25 @@ export default function ContentDetailModal({
     if (!formData.contact_phone) return '#';
     const cleanPhone = formData.contact_phone.replace(/\D/g, '');
     const phoneWithCountry = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone;
+    const authorName = formData.author_name || item.author_name;
+    const titleSnippet = (formData.title || item.title).slice(0, 50);
     const greeting = encodeURIComponent(
-      `Halo kak ${item.author_name}! Aku lihat konten kakak "${item.title.slice(0, 50)}..." di ${item.platform === 'tiktok' ? 'TikTok' : 'Instagram'} keren banget dan cocok banget dengan audiens kami. Apakah saat ini open untuk endorsement/kolaborasi campaign? Ditunggu kabar baiknya ya kak!`
+      `Halo kak ${authorName}! Aku lihat konten kakak "${titleSnippet}..." di ${item.platform === 'tiktok' ? 'TikTok' : 'Instagram'} keren banget dan cocok banget dengan audiens kami. Apakah saat ini open untuk endorsement/kolaborasi campaign? Ditunggu kabar baiknya ya kak!`
     );
     return `https://wa.me/${phoneWithCountry}?text=${greeting}`;
   };
+
+  const currentAvatar = formData.author_avatar_url || item.author_avatar_url;
+  const currentThumbnail = formData.thumbnail_url || item.thumbnail_url;
+  const currentAuthorName = formData.author_name || item.author_name;
+  const currentUsername = formData.author_username || item.author_username;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
         className="modal-content" 
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 820, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+        style={{ maxWidth: 860, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}
       >
         {/* Modal Header */}
         <div style={{
@@ -151,14 +222,15 @@ export default function ContentDetailModal({
           justifyContent: 'space-between',
           padding: '16px 20px',
           borderBottom: '1px solid var(--border-subtle)',
-          background: 'rgba(20, 24, 39, 0.5)',
+          background: 'rgba(20, 24, 39, 0.65)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span className={`badge ${item.platform === 'tiktok' ? 'badge-tiktok' : 'badge-ig'}`}>
               {item.platform === 'tiktok' ? 'TikTok Video' : 'Instagram Reel'}
             </span>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>
-              Analisis & Outreach Detail
+            <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Edit3 size={16} color="var(--accent-cyan)" />
+              Edit Konten & Analisis Outreach
             </span>
           </div>
 
@@ -176,7 +248,7 @@ export default function ContentDetailModal({
         </div>
 
         {/* Modal Body */}
-        <form onSubmit={handleSubmit} style={{ overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <form onSubmit={handleSubmit} style={{ overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div className="detail-modal-grid">
             {/* Left Column: Visual Media & Creator Card */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -199,7 +271,7 @@ export default function ContentDetailModal({
                       gap: 4,
                     }}
                   >
-                    <span>🎬 Live Video Player</span>
+                    <span>🎬 Live Player</span>
                   </button>
                   <button
                     type="button"
@@ -217,7 +289,7 @@ export default function ContentDetailModal({
                       gap: 4,
                     }}
                   >
-                    <span>🖼️ Foto Thumbnail</span>
+                    <span>🖼️ Cover Photo</span>
                   </button>
                 </div>
 
@@ -270,12 +342,12 @@ export default function ContentDetailModal({
                         boxShadow: '0 8px 30px rgba(220, 39, 67, 0.35)',
                       }}>
                         <img
-                          src={item.author_avatar_url || item.thumbnail_url}
-                          alt={item.author_name}
+                          src={currentAvatar || currentThumbnail}
+                          alt={currentAuthorName}
                           referrerPolicy="no-referrer"
                           onError={(e) => {
                             const img = e.target as HTMLImageElement;
-                            const target = item.author_avatar_url || item.thumbnail_url;
+                            const target = currentAvatar || currentThumbnail;
                             if (!img.src.includes('/api/proxy-image') && target && target.startsWith('http')) {
                               img.src = `/api/proxy-image?url=${encodeURIComponent(target)}`;
                             } else {
@@ -295,55 +367,17 @@ export default function ContentDetailModal({
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                           <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#ffffff' }}>
-                            {item.author_name || item.author_username}
+                            {currentAuthorName || currentUsername}
                           </h3>
                           <span style={{ color: '#06b6d4', fontSize: '1rem' }}>✓</span>
                         </div>
                         <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center' }}>
-                          <CopyUsernameBadge username={item.author_username} size="md" />
-                        </div>
-                      </div>
-
-                      {/* Profile Stats Quick Row */}
-                      <div style={{
-                        display: 'flex',
-                        gap: 16,
-                        background: 'rgba(255, 255, 255, 0.04)',
-                        padding: '12px 24px',
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        marginTop: 4,
-                      }}>
-                        <div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
-                            {item.views_count.toLocaleString()}
-                          </div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                            Followers
-                          </div>
-                        </div>
-                        <div style={{ width: 1, background: 'rgba(255, 255, 255, 0.1)' }} />
-                        <div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
-                            {item.likes_count.toLocaleString()}
-                          </div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                            Posts
-                          </div>
-                        </div>
-                        <div style={{ width: 1, background: 'rgba(255, 255, 255, 0.1)' }} />
-                        <div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
-                            {item.comments_count.toLocaleString()}
-                          </div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                            Following
-                          </div>
+                          <CopyUsernameBadge username={currentUsername} size="md" />
                         </div>
                       </div>
 
                       <a
-                        href={item.author_profile_url || item.url}
+                        href={formData.author_profile_url || item.url}
                         target="_blank"
                         rel="noreferrer"
                         className="btn-primary"
@@ -377,8 +411,8 @@ export default function ContentDetailModal({
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, minHeight: 320, background: '#0e111a', gap: 12 }}>
                       <img 
-                        src={item.thumbnail_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'} 
-                        alt={item.title}
+                        src={currentThumbnail || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'} 
+                        alt={formData.title || item.title}
                         referrerPolicy="no-referrer"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
@@ -407,8 +441,8 @@ export default function ContentDetailModal({
                 ) : (
                   <div style={{ position: 'relative', width: '100%', height: 280 }}>
                     <img 
-                      src={item.thumbnail_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'} 
-                      alt={item.title}
+                      src={currentThumbnail || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'} 
+                      alt={formData.title || item.title}
                       referrerPolicy="no-referrer"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
@@ -461,23 +495,23 @@ export default function ContentDetailModal({
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <img 
-                      src={item.author_avatar_url || `https://api.dicebear.com/7.x/personas/svg?seed=${item.author_username}`}
-                      alt={item.author_name}
+                      src={currentAvatar || `https://api.dicebear.com/7.x/personas/svg?seed=${currentUsername}`}
+                      alt={currentAuthorName}
                       referrerPolicy="no-referrer"
                       onError={(e) => {
                         const img = e.target as HTMLImageElement;
-                        if (!img.src.includes('/api/proxy-image') && item.author_avatar_url && item.author_avatar_url.startsWith('http')) {
-                          img.src = `/api/proxy-image?url=${encodeURIComponent(item.author_avatar_url)}`;
+                        if (!img.src.includes('/api/proxy-image') && currentAvatar && currentAvatar.startsWith('http')) {
+                          img.src = `/api/proxy-image?url=${encodeURIComponent(currentAvatar)}`;
                         } else {
-                          img.src = `https://api.dicebear.com/7.x/personas/svg?seed=${item.author_username}`;
+                          img.src = `https://api.dicebear.com/7.x/personas/svg?seed=${currentUsername}`;
                         }
                       }}
                       style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '1px solid #8b5cf6', background: '#1a1d2e', flexShrink: 0 }}
                     />
                     <div>
-                      <h4 style={{ fontSize: '0.98rem', fontWeight: 800, margin: 0 }}>{item.author_name}</h4>
+                      <h4 style={{ fontSize: '0.98rem', fontWeight: 800, margin: 0 }}>{currentAuthorName}</h4>
                       <div style={{ marginTop: 2 }}>
-                        <CopyUsernameBadge username={item.author_username} size="sm" />
+                        <CopyUsernameBadge username={currentUsername} size="sm" />
                       </div>
                     </div>
                   </div>
@@ -488,7 +522,7 @@ export default function ContentDetailModal({
                         type="button"
                         onClick={() => {
                           onClose();
-                          onOpenCreatorProfile(item.author_username);
+                          onOpenCreatorProfile(currentUsername);
                         }}
                         className="btn-secondary"
                         style={{
@@ -506,7 +540,7 @@ export default function ContentDetailModal({
                       </button>
                     )}
                     <a 
-                      href={item.author_profile_url || item.url}
+                      href={formData.author_profile_url || item.author_profile_url || item.url}
                       target="_blank"
                       rel="noreferrer"
                       style={{
@@ -539,8 +573,8 @@ export default function ContentDetailModal({
                 }}>
                   <div>
                     <span style={{ color: 'var(--text-muted)', display: 'block' }}>Indeks Potensi Viral:</span>
-                    <span style={{ fontWeight: 700, color: item.engagement_rate > 9 ? '#34d399' : '#fbbf24' }}>
-                      {item.engagement_rate > 9 ? '🚀 Sangat Tinggi / Viral' : item.engagement_rate >= 6 ? '🔥 Performa Sehat' : '👍 Standar'} ({item.engagement_rate}% ER)
+                    <span style={{ fontWeight: 700, color: currentER > 9 ? '#34d399' : '#fbbf24' }}>
+                      {currentER > 9 ? '🚀 Sangat Tinggi / Viral' : currentER >= 6 ? '🔥 Performa Sehat' : '👍 Standar'} ({currentER}% ER)
                     </span>
                   </div>
 
@@ -554,7 +588,7 @@ export default function ContentDetailModal({
                   <div style={{ gridColumn: 'span 2', borderTop: '1px solid rgba(255, 255, 255, 0.04)', paddingTop: 6 }}>
                     <span style={{ color: 'var(--text-muted)', display: 'block' }}>Audio / Sound:</span>
                     <span style={{ color: '#cbd5e1', fontWeight: 600 }}>
-                      🎵 {item.audio_title || 'Original Audio'} - {item.audio_author || item.author_name}
+                      🎵 {formData.audio_title || item.audio_title || 'Original Audio'} {formData.audio_author ? `- ${formData.audio_author}` : ''}
                     </span>
                   </div>
                 </div>
@@ -616,38 +650,131 @@ export default function ContentDetailModal({
                   />
                 </div>
               </div>
-
-              {/* Audio & Hashtags */}
-              {(item.audio_title || (item.hashtags && item.hashtags.length > 0)) && (
-                <div className="glass-panel" style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {item.audio_title && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: '#c084fc' }}>
-                      <Music size={14} />
-                      <span style={{ fontWeight: 500 }}>Sound: {item.audio_title}</span>
-                    </div>
-                  )}
-                  {item.hashtags && item.hashtags.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {item.hashtags.map((h, i) => (
-                        <span key={i} style={{
-                          fontSize: '0.72rem',
-                          padding: '2px 8px',
-                          borderRadius: 'var(--radius-full)',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          color: 'var(--text-muted)'
-                        }}>
-                          {h}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
-            {/* Right Column: In-Depth Metrics & Management */}
+            {/* Right Column: In-Depth Content Editing & Outreach Management */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Outreach Status Selector */}
+              {/* Section 1: Judul / Caption Konten */}
+              <div className="glass-panel" style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Edit3 size={14} color="#06b6d4" />
+                    <span>Judul / Caption Konten:</span>
+                  </label>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+                    {formData.title.length} karakter
+                  </span>
+                </div>
+                <textarea
+                  rows={3}
+                  placeholder="Tulis judul atau ringkasan caption konten..."
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: '#0d111d',
+                    border: '1px solid var(--border-subtle)',
+                    fontSize: '0.82rem',
+                    color: 'var(--text-main)',
+                    lineHeight: 1.45,
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+
+              {/* Section 2: Kategori Niche, Talent Type & Hook Type */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                <div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem', fontWeight: 700, color: '#38bdf8', marginBottom: 6 }}>
+                    <Tag size={13} />
+                    <span>Kategori Niche:</span>
+                  </label>
+                  <CustomSelect
+                    value={formData.category_id}
+                    onChange={(val) => setFormData({ ...formData, category_id: val })}
+                    options={categoryOptions}
+                    placeholder="Pilih Kategori"
+                    size="sm"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#f472b6', marginBottom: 6 }}>
+                    Tipe / Persona Cewe:
+                  </label>
+                  <CustomSelect
+                    value={formData.talent_type}
+                    onChange={(val) => setFormData({ ...formData, talent_type: val })}
+                    options={TALENT_TYPE_OPTIONS}
+                    placeholder="Pilih Tipe Cewe"
+                    size="sm"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>
+                    Format / Hook:
+                  </label>
+                  <CustomSelect
+                    value={formData.hook_type}
+                    onChange={(val) => setFormData({ ...formData, hook_type: val })}
+                    options={HOOK_TYPE_OPTIONS}
+                    placeholder="Pilih Hook"
+                    size="sm"
+                  />
+                </div>
+              </div>
+
+              {/* Section 3: Tags & Hashtags */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.76rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 5 }}>
+                    <Tag size={12} color="#a855f7" />
+                    <span>Tags Kustom (pisahkan koma):</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: skincare, aff, endorsement"
+                    value={formData.tags}
+                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '7px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: '#0d111d',
+                      border: '1px solid var(--border-subtle)',
+                      fontSize: '0.78rem',
+                      color: 'var(--text-main)',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.76rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 5 }}>
+                    <Hash size={12} color="#06b6d4" />
+                    <span>Hashtags (pisahkan koma):</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: #racunshopee, #fyp, #ootd"
+                    value={formData.hashtags}
+                    onChange={(e) => setFormData({ ...formData, hashtags: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '7px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: '#0d111d',
+                      border: '1px solid var(--border-subtle)',
+                      fontSize: '0.78rem',
+                      color: 'var(--text-main)',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Section 4: Outreach Status Pipeline */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                   Status Outreach / Pipeline:
@@ -681,49 +808,7 @@ export default function ContentDetailModal({
                 </div>
               </div>
 
-              {/* Category, Talent Type & Hook Type */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
-                    Kategori Niche:
-                  </label>
-                  <CustomSelect
-                    value={formData.category_id}
-                    onChange={(val) => setFormData({ ...formData, category_id: val })}
-                    options={categories.map((c) => ({ value: c.id, label: c.name, color: c.color }))}
-                    placeholder="Pilih Kategori"
-                    size="sm"
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#f472b6', marginBottom: 6 }}>
-                    Tipe / Persona Cewe:
-                  </label>
-                  <CustomSelect
-                    value={formData.talent_type}
-                    onChange={(val) => setFormData({ ...formData, talent_type: val })}
-                    options={TALENT_TYPE_OPTIONS}
-                    placeholder="Pilih Tipe Cewe"
-                    size="sm"
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
-                    Format / Hook:
-                  </label>
-                  <CustomSelect
-                    value={formData.hook_type}
-                    onChange={(val) => setFormData({ ...formData, hook_type: val })}
-                    options={HOOK_TYPE_OPTIONS}
-                    placeholder="Pilih Hook"
-                    size="sm"
-                  />
-                </div>
-              </div>
-
-              {/* Rating Bintang */}
+              {/* Section 5: Rating Bintang */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                   Rating Ketertarikan:
@@ -749,7 +834,7 @@ export default function ContentDetailModal({
                 </div>
               </div>
 
-              {/* In-Depth Performance Metrics */}
+              {/* Section 6: In-Depth Performance Metrics */}
               <div className="glass-panel" style={{ padding: 14 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -757,7 +842,7 @@ export default function ContentDetailModal({
                     Metrik Performa & Engagement
                   </span>
                   <span className="badge badge-er">
-                    ER: {calcER(Number(formData.likes_count), Number(formData.comments_count), Number(formData.shares_count), Number(formData.views_count))}%
+                    ER: {currentER}%
                   </span>
                 </div>
 
@@ -804,13 +889,13 @@ export default function ContentDetailModal({
                 </div>
               </div>
 
-              {/* Personal Notes */}
+              {/* Section 7: Personal Notes */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                   Catatan Pribadi & Log Follow-up:
                 </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   placeholder="Contoh: Rate card 500k, tone konten sangat estetik, target campaign Q3..."
                   value={formData.contact_notes}
                   onChange={(e) => setFormData({ ...formData, contact_notes: e.target.value })}
@@ -824,6 +909,129 @@ export default function ContentDetailModal({
                     resize: 'vertical',
                   }}
                 />
+              </div>
+
+              {/* Section 8: Detail Akun Kreator & Media (Collapsible Accordion) */}
+              <div className="glass-panel" style={{ padding: 12, borderRadius: 'var(--radius-sm)' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowMediaEditor(!showMediaEditor)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    padding: '2px 4px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Sliders size={14} color="#f472b6" />
+                    <span>⚙️ Edit Detail Akun Kreator & URL Media</span>
+                  </div>
+                  {showMediaEditor ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                </button>
+
+                {showMediaEditor && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 4 }}>
+                          Nama Kreator (Display Name):
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.author_name}
+                          onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: 6, background: '#0e111a', border: '1px solid var(--border-subtle)', fontSize: '0.78rem' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 4 }}>
+                          Username (@username):
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.author_username}
+                          onChange={(e) => setFormData({ ...formData, author_username: e.target.value.replace(/^@/, '') })}
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: 6, background: '#0e111a', border: '1px solid var(--border-subtle)', fontSize: '0.78rem' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 4 }}>
+                        URL Profil Kreator:
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.author_profile_url}
+                        onChange={(e) => setFormData({ ...formData, author_profile_url: e.target.value })}
+                        placeholder="https://instagram.com/..."
+                        style={{ width: '100%', padding: '6px 10px', borderRadius: 6, background: '#0e111a', border: '1px solid var(--border-subtle)', fontSize: '0.78rem' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 4 }}>
+                          URL Cover / Thumbnail:
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.thumbnail_url}
+                          onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+                          placeholder="https://..."
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: 6, background: '#0e111a', border: '1px solid var(--border-subtle)', fontSize: '0.78rem' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 4 }}>
+                          URL Avatar Foto Profil:
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.author_avatar_url}
+                          onChange={(e) => setFormData({ ...formData, author_avatar_url: e.target.value })}
+                          placeholder="https://..."
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: 6, background: '#0e111a', border: '1px solid var(--border-subtle)', fontSize: '0.78rem' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 4 }}>
+                          Judul Audio / Musik:
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.audio_title}
+                          onChange={(e) => setFormData({ ...formData, audio_title: e.target.value })}
+                          placeholder="Original Sound"
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: 6, background: '#0e111a', border: '1px solid var(--border-subtle)', fontSize: '0.78rem' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 4 }}>
+                          Artis / Pembuat Audio:
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.audio_author}
+                          onChange={(e) => setFormData({ ...formData, audio_author: e.target.value })}
+                          placeholder="Nama Artis"
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: 6, background: '#0e111a', border: '1px solid var(--border-subtle)', fontSize: '0.78rem' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -849,6 +1057,14 @@ export default function ContentDetailModal({
               type="submit"
               className="btn-primary"
               id="btn-save-content-detail"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 20px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+              }}
             >
               <Save size={16} />
               <span>{isSavedAlert ? 'Tersimpan!' : 'Simpan Perubahan'}</span>
