@@ -55,6 +55,7 @@ import {
   updateSavedLink, 
   deleteSavedLink,
   updateOutreachStatus,
+  toggleLikeLink,
   checkSupabaseStatus,
   SupabaseStatusResult,
   TALENT_TYPES,
@@ -134,7 +135,10 @@ export default function Home() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [talentTypeFilter, setTalentTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [wishlistOnly, setWishlistOnly] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<'newest' | 'highest_er' | 'highest_views' | 'rating'>('newest');
+
+  const wishlistCount = useMemo(() => links.filter((l) => l.is_liked).length, [links]);
 
   // Modals
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -216,6 +220,24 @@ export default function Home() {
     }
   };
 
+  const handleToggleLike = async (id: string, currentlyLiked: boolean) => {
+    const nextLiked = await toggleLikeLink(id, currentlyLiked);
+    setLinks((prev) =>
+      prev.map((l) => {
+        if (l.id === id) {
+          const newLikes = (l.likes_count || 0) + (nextLiked ? 1 : -1);
+          return {
+            ...l,
+            is_liked: nextLiked,
+            likes_count: Math.max(0, newLikes),
+          };
+        }
+        return l;
+      })
+    );
+    showToast(nextLiked ? '💦 Ditambahkan ke Wishlist!' : '💦 Dihapus dari Wishlist', 'info');
+  };
+
   const handleAddCategory = async (catData: Omit<Category, 'id' | 'created_at'>) => {
     const created = await createCategory(catData);
     setCategories((prev) => [...prev, created]);
@@ -243,6 +265,11 @@ export default function Home() {
           if (!matchAuthor && !matchTitle && !matchAudio && !matchHashtags && !matchNotes && !matchTalentType) {
             return false;
           }
+        }
+
+        // Wishlist Filter
+        if (wishlistOnly && !item.is_liked) {
+          return false;
         }
 
         // Platform
@@ -282,10 +309,10 @@ export default function Home() {
         }
         return 0;
       });
-  }, [links, searchQuery, platformFilter, categoryFilter, statusFilter, sortBy]);
+  }, [links, searchQuery, platformFilter, categoryFilter, talentTypeFilter, statusFilter, wishlistOnly, sortBy]);
 
   const handleResetToRealData = () => {
-    if (confirm('Bersihkan data lama dan muat 176 link kurasi dari notes Anda?')) {
+    if (confirm('Bersihkan cache dan muat ulang data kurasi lengkap dari database?')) {
       const fresh = resetToRealUserLinks();
       setLinks([...fresh]);
       loadData();
@@ -417,6 +444,30 @@ export default function Home() {
                     }}
                   >
                     Instagram
+                  </button>
+
+                  <button
+                    onClick={() => setWishlistOnly(!wishlistOnly)}
+                    style={{
+                      padding: '7px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      background: wishlistOnly 
+                        ? 'linear-gradient(135deg, rgba(2, 132, 199, 0.45), rgba(14, 165, 233, 0.45))' 
+                        : 'rgba(255, 255, 255, 0.04)',
+                      color: wishlistOnly ? '#38bdf8' : 'var(--text-muted)',
+                      border: wishlistOnly ? '1px solid #38bdf8' : '1px solid var(--border-subtle)',
+                      boxShadow: wishlistOnly ? '0 0 14px rgba(56, 189, 248, 0.4)' : 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <span style={{ fontSize: '13px', lineHeight: 1 }}>💦</span>
+                    <span>Wishlist {wishlistCount > 0 ? `(${wishlistCount})` : ''}</span>
                   </button>
                 </div>
               </div>
@@ -581,6 +632,7 @@ export default function Home() {
                       onUpdateStatus={handleUpdateStatus}
                       onUpdateCategory={handleUpdateCategory}
                       onDelete={handleDeleteLink}
+                      onToggleLike={handleToggleLike}
                       onOpenCreatorProfile={(username) => {
                         const prof = creatorProfiles.find(p => p.username.toLowerCase() === username.toLowerCase());
                         if (prof) setSelectedProfile(prof);

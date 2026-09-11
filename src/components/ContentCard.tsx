@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   SavedLink, 
   Category, 
@@ -9,7 +9,6 @@ import {
 import CustomSelect, { SelectOption } from './CustomSelect';
 import CopyUsernameBadge from './CopyUsernameBadge';
 import { 
-  Heart, 
   Eye, 
   MessageCircle, 
   Share2, 
@@ -40,6 +39,7 @@ interface ContentCardProps {
   onUpdateCategory?: (id: string, categoryId: string | null) => void;
   onDelete: (id: string) => void;
   onOpenCreatorProfile?: (username: string) => void;
+  onToggleLike?: (id: string, currentlyLiked: boolean) => void;
 }
 
 const STATUS_LABELS: Record<OutreachStatus, { label: string; className: string }> = {
@@ -60,8 +60,49 @@ export default function ContentCard({
   onUpdateCategory,
   onDelete,
   onOpenCreatorProfile,
+  onToggleLike,
 }: ContentCardProps) {
   const isTiktok = item.platform === 'tiktok';
+  const [showSplash, setShowSplash] = useState(false);
+  const lastTapRef = useRef<number>(0);
+  const singleClickTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const triggerLikeSplash = () => {
+    setShowSplash(true);
+    setTimeout(() => setShowSplash(false), 850);
+    if (onToggleLike) {
+      onToggleLike(item.id, !!item.is_liked);
+    }
+  };
+
+  const handleMediaClick = (e: React.MouseEvent) => {
+    if (singleClickTimerRef.current) {
+      clearTimeout(singleClickTimerRef.current);
+      singleClickTimerRef.current = null;
+      triggerLikeSplash();
+    } else {
+      singleClickTimerRef.current = setTimeout(() => {
+        singleClickTimerRef.current = null;
+        onOpenDetail(item);
+      }, 250);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      e.preventDefault();
+      if (singleClickTimerRef.current) {
+        clearTimeout(singleClickTimerRef.current);
+        singleClickTimerRef.current = null;
+      }
+      triggerLikeSplash();
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+    }
+  };
 
   const formatNumber = (num: number) => {
     if (!num) return '0';
@@ -98,10 +139,37 @@ export default function ContentCard({
           borderTopLeftRadius: 'var(--radius-md)',
           borderTopRightRadius: 'var(--radius-md)',
         }}
-        onClick={() => onOpenDetail(item)}
+        onClick={handleMediaClick}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Background shimmer placeholder while image loads */}
         <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+
+        {/* Double-Tap Water Splash Overlay (Air Muncrat 💦) */}
+        {showSplash && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 35,
+              pointerEvents: 'none',
+            }}
+          >
+            <div
+              className="double-tap-splash"
+              style={{
+                fontSize: '5rem',
+                filter: 'drop-shadow(0 0 24px rgba(56, 189, 248, 0.9))',
+                userSelect: 'none',
+              }}
+            >
+              💦
+            </div>
+          </div>
+        )}
 
         {item.thumbnail_url ? (
           <img 
@@ -152,19 +220,53 @@ export default function ContentCard({
           justifyContent: 'space-between',
           alignItems: 'center',
           pointerEvents: 'none',
+          zIndex: 10,
         }}>
           {/* Platform Badge */}
           <span className={`badge ${isTiktok ? 'badge-tiktok' : 'badge-ig'}`}>
             {isTiktok ? 'TikTok' : 'Instagram'}
           </span>
 
-          {/* Engagement Rate Badge */}
-          {item.engagement_rate > 0 && (
-            <span className="badge badge-er">
-              <TrendingUp size={12} />
-              {item.engagement_rate.toFixed(1)}% ER
-            </span>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, pointerEvents: 'auto' }}>
+            {/* Engagement Rate Badge */}
+            {item.engagement_rate > 0 && (
+              <span className="badge badge-er">
+                <TrendingUp size={12} />
+                {item.engagement_rate.toFixed(1)}% ER
+              </span>
+            )}
+
+            {/* Wishlist / Like button with 💦 */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                triggerLikeSplash();
+              }}
+              title={item.is_liked ? "Wishlist aktif 💦 (Klik untuk lepas)" : "Tambah Wishlist 💦 (Double tap foto)"}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '3px 8px',
+                borderRadius: 'var(--radius-full)',
+                background: item.is_liked 
+                  ? 'linear-gradient(135deg, rgba(2, 132, 199, 0.95), rgba(14, 165, 233, 0.9))' 
+                  : 'rgba(0, 0, 0, 0.55)',
+                border: item.is_liked ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.25)',
+                backdropFilter: 'blur(8px)',
+                cursor: 'pointer',
+                color: '#fff',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                boxShadow: item.is_liked ? '0 0 14px rgba(56, 189, 248, 0.6)' : 'none',
+                transform: item.is_liked ? 'scale(1.05)' : 'scale(1)',
+                transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              }}
+            >
+              <span style={{ fontSize: '13px', lineHeight: 1 }}>💦</span>
+              {item.is_liked && <span style={{ fontSize: '0.68rem', fontWeight: 700 }}>Wishlist</span>}
+            </button>
+          </div>
         </div>
 
         {/* Play Overlay indicator on hover */}
@@ -402,10 +504,30 @@ export default function ContentCard({
             <Eye size={13} color="var(--text-dim)" />
             <span>{formatNumber(item.views_count)}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} title="Likes">
-            <Heart size={13} color="#f43f5e" />
-            <span>{formatNumber(item.likes_count)}</span>
-          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              triggerLikeSplash();
+            }}
+            title={item.is_liked ? "Disukai / Wishlist 💦 (Klik untuk batal)" : "Suka / Wishlist 💦 (Double tap foto)"}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              background: item.is_liked ? 'rgba(56, 189, 248, 0.16)' : 'transparent',
+              border: item.is_liked ? '1px solid rgba(56, 189, 248, 0.45)' : '1px solid transparent',
+              borderRadius: 'var(--radius-sm)',
+              padding: '2px 6px',
+              cursor: 'pointer',
+              color: item.is_liked ? '#38bdf8' : 'inherit',
+              transition: 'all 0.18s ease',
+            }}
+          >
+            <span style={{ fontSize: '13px', lineHeight: 1 }}>💦</span>
+            <span style={{ fontWeight: item.is_liked ? 700 : 500 }}>
+              {formatNumber(item.likes_count + (item.is_liked ? 1 : 0))}
+            </span>
+          </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} title="Komentar">
             <MessageCircle size={13} color="var(--accent-cyan)" />
             <span>{formatNumber(item.comments_count)}</span>

@@ -11,7 +11,6 @@ import {
   Film, 
   TrendingUp, 
   Eye, 
-  Heart, 
   Sparkles, 
   Star,
   CheckCircle2,
@@ -562,7 +561,7 @@ export default function ProfilesView({
                   {formatNumber(profile.total_views)}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Heart size={13} color="#f43f5e" />
+                  <span style={{ fontSize: '13px' }}>💦</span>
                   {formatNumber(profile.total_likes)}
                 </span>
                 <span style={{ color: '#34d399', fontWeight: 700 }}>

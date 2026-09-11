@@ -89,8 +89,27 @@ export async function checkSupabaseStatus(): Promise<SupabaseStatusResult> {
   }
 }
 
-const LOCAL_STORAGE_KEY_CATEGORIES = 'talentpulse_categories_v6';
-const LOCAL_STORAGE_KEY_LINKS = 'talentpulse_saved_links_v6';
+const LOCAL_STORAGE_KEY_CATEGORIES = 'talentpulse_categories_v7';
+const LOCAL_STORAGE_KEY_LINKS = 'talentpulse_saved_links_v7';
+const LOCAL_STORAGE_KEY_LIKED = 'talentpulse_liked_ids_v1';
+
+export function getLocalLikedIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY_LIKED);
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw));
+  } catch {
+    return new Set();
+  }
+}
+
+export function saveLocalLikedIds(ids: Set<string>) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY_LIKED, JSON.stringify(Array.from(ids)));
+  } catch {}
+}
 
 // Helpers for Local Storage
 function getLocalCategories(): Category[] {
@@ -98,7 +117,7 @@ function getLocalCategories(): Category[] {
   try {
     const data = localStorage.getItem(LOCAL_STORAGE_KEY_CATEGORIES);
     if (!data) {
-      ['v1', 'v2', 'v3', 'v4', 'v5'].forEach(v => {
+      ['v1', 'v2', 'v3', 'v4', 'v5', 'v6'].forEach(v => {
         localStorage.removeItem(`talentpulse_categories_${v}`);
       });
       localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(INITIAL_CATEGORIES));
@@ -126,21 +145,29 @@ function getLocalLinks(): SavedLink[] {
   try {
     const data = localStorage.getItem(LOCAL_STORAGE_KEY_LINKS);
     if (!data) {
-      ['v1', 'v2', 'v3', 'v4', 'v5'].forEach(v => {
+      ['v1', 'v2', 'v3', 'v4', 'v5', 'v6'].forEach(v => {
         localStorage.removeItem(`talentpulse_saved_links_${v}`);
       });
       localStorage.setItem(LOCAL_STORAGE_KEY_LINKS, JSON.stringify(INITIAL_LINKS));
       return INITIAL_LINKS;
     }
-    const parsed = JSON.parse(data);
-    // Ensure any newly resolved real photos from INITIAL_LINKS are reflected if stored link has placeholders
+    let parsed: SavedLink[] = JSON.parse(data);
     if (Array.isArray(parsed)) {
       let hasUpdates = false;
+
+      // Automatically merge any newly added links from INITIAL_LINKS that aren't stored locally yet
+      const existingUrls = new Set(parsed.map((p: SavedLink) => (p.url || '').trim().toLowerCase()));
+      const missing = INITIAL_LINKS.filter(init => !existingUrls.has((init.url || '').trim().toLowerCase()));
+      if (missing.length > 0) {
+        hasUpdates = true;
+        parsed = [...missing, ...parsed];
+      }
+
+      // Ensure real photos from INITIAL_LINKS are upgraded
       const initialMap = new Map(INITIAL_LINKS.map(l => [l.id, l]));
-      const upgraded = parsed.map(item => {
+      parsed = parsed.map(item => {
         const initial = initialMap.get(item.id);
         if (initial) {
-          // If stored link has dicebear or unsplash but initial has real photo, upgrade
           const needsAvatarUpdate = item.author_avatar_url?.includes('dicebear') && !initial.author_avatar_url?.includes('dicebear');
           const needsThumbUpdate = item.thumbnail_url?.includes('unsplash') && !initial.thumbnail_url?.includes('unsplash');
           if (needsAvatarUpdate || needsThumbUpdate) {
@@ -158,11 +185,11 @@ function getLocalLinks(): SavedLink[] {
       });
 
       if (hasUpdates) {
-        localStorage.setItem(LOCAL_STORAGE_KEY_LINKS, JSON.stringify(upgraded));
-        return upgraded;
+        localStorage.setItem(LOCAL_STORAGE_KEY_LINKS, JSON.stringify(parsed));
       }
+      return parsed;
     }
-    return parsed;
+    return INITIAL_LINKS;
   } catch (e) {
     console.error('Error reading links from localStorage:', e);
     return INITIAL_LINKS;
@@ -171,7 +198,7 @@ function getLocalLinks(): SavedLink[] {
 
 export function resetToRealUserLinks(): SavedLink[] {
   if (typeof window !== 'undefined') {
-    ['v1', 'v2', 'v3', 'v4', 'v5', 'v6'].forEach(v => {
+    ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7'].forEach(v => {
       localStorage.removeItem(`talentpulse_saved_links_${v}`);
       localStorage.removeItem(`talentpulse_categories_${v}`);
     });
@@ -241,17 +268,29 @@ export async function deleteCategory(id: string): Promise<boolean> {
 }
 
 export async function fetchSavedLinks(): Promise<SavedLink[]> {
+  const likedIds = getLocalLikedIds();
+  let links: SavedLink[] = [];
+
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase.from('saved_links').select('*').order('created_at', { ascending: false });
       if (!error && data && data.length > 0) {
-        return data as SavedLink[];
+        links = data as SavedLink[];
       }
     } catch (err) {
       console.warn('Supabase fetchSavedLinks failed, falling back to local:', err);
     }
   }
-  return getLocalLinks();
+
+  if (links.length === 0) {
+    links = getLocalLinks();
+  }
+
+  // Map is_liked flag
+  return links.map(l => ({
+    ...l,
+    is_liked: likedIds.has(l.id) || (Array.isArray(l.tags) && (l.tags.includes('liked') || l.tags.includes('wishlist'))) || false,
+  }));
 }
 
 export async function createSavedLink(link: Omit<SavedLink, 'id' | 'created_at' | 'updated_at'>): Promise<SavedLink> {
@@ -330,3 +369,48 @@ export async function updateOutreachStatus(id: string, status: OutreachStatus): 
   };
   return updateSavedLink(id, updates);
 }
+
+export async function toggleLikeLink(id: string, currentlyLiked: boolean): Promise<boolean> {
+  const nextLiked = !currentlyLiked;
+  const likedIds = getLocalLikedIds();
+  if (nextLiked) {
+    likedIds.add(id);
+  } else {
+    likedIds.delete(id);
+  }
+  saveLocalLikedIds(likedIds);
+
+  // Update in local links storage
+  const localLinks = getLocalLinks();
+  const target = localLinks.find((l) => l.id === id);
+  if (target) {
+    let currentTags = Array.isArray(target.tags) ? [...target.tags] : [];
+    if (nextLiked && !currentTags.includes('liked')) {
+      currentTags.push('liked');
+    } else if (!nextLiked && currentTags.includes('liked')) {
+      currentTags = currentTags.filter((t) => t !== 'liked');
+    }
+    target.tags = currentTags;
+    target.is_liked = nextLiked;
+    saveLocalLinks(localLinks);
+  }
+
+  // Update in Supabase if configured
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data } = await supabase.from('saved_links').select('tags').eq('id', id).single();
+      let dbTags: string[] = (data && Array.isArray(data.tags)) ? [...data.tags] : [];
+      if (nextLiked && !dbTags.includes('liked')) {
+        dbTags.push('liked');
+      } else if (!nextLiked && dbTags.includes('liked')) {
+        dbTags = dbTags.filter((t) => t !== 'liked');
+      }
+      await supabase.from('saved_links').update({ tags: dbTags, updated_at: new Date().toISOString() }).eq('id', id);
+    } catch (err) {
+      console.warn('Failed to update like tag in Supabase:', err);
+    }
+  }
+
+  return nextLiked;
+}
+

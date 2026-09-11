@@ -17,7 +17,6 @@ import {
   Mail, 
   Star, 
   TrendingUp, 
-  Heart, 
   Eye, 
   MessageCircle, 
   Share2, 
@@ -858,7 +857,7 @@ export default function ContentDetailModal({
                   </div>
 
                   <div>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Likes:</span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>💦 Likes:</span>
                     <input 
                       type="number"
                       value={formData.likes_count}

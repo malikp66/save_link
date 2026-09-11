@@ -12,7 +12,6 @@ import {
   Mail, 
   Star, 
   TrendingUp, 
-  Heart, 
   Eye, 
   MessageCircle, 
   Share2, 
@@ -480,8 +479,8 @@ export default function ProfileDetailModal({
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Eye size={12} /> {formatNumber(item.views_count)}
                       </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#f43f5e' }}>
-                        <Heart size={12} /> {formatNumber(item.likes_count)}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ fontSize: '11px' }}>💦</span> {formatNumber(item.likes_count)}
                       </span>
                       {item.hook_type && (
                         <span style={{

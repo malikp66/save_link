@@ -48,6 +48,7 @@ export interface SavedLink {
   contact_email?: string;
   contact_notes?: string;
   last_contacted_at?: string | null;
+  is_liked?: boolean;
   created_at: string;
   updated_at?: string;
 }
