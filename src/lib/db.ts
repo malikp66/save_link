@@ -41,6 +41,26 @@ export interface SupabaseStatusResult {
 
 export async function checkSupabaseStatus(): Promise<SupabaseStatusResult> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+
+  // 1. Check Neon PostgreSQL Cloud Database
+  if (typeof window !== 'undefined') {
+    try {
+      const neonRes = await fetch('/api/categories', { signal: AbortSignal.timeout(3000) });
+      if (neonRes.ok) {
+        const neonData = await neonRes.json();
+        if (neonData.categories && neonData.categories.length > 0) {
+          return {
+            isConfigured: true,
+            isConnected: true,
+            tablesExist: true,
+            message: 'Berhasil terhubung ke Neon PostgreSQL Cloud Database! Sinkronisasi real-time & media storage aktif.',
+            projectUrl: 'Neon Cloud (ap-southeast-1)',
+          };
+        }
+      }
+    } catch (e) {}
+  }
+
   if (!isSupabaseConfigured || !supabase) {
     return {
       isConfigured: false,
@@ -218,6 +238,23 @@ function saveLocalLinks(links: SavedLink[]) {
 // ==========================================
 
 export async function fetchCategories(): Promise<Category[]> {
+  // 1. Try fetching from Neon Database API
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch('/api/categories', { signal: AbortSignal.timeout(4000) });
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.categories) && json.categories.length > 0) {
+          saveLocalCategories(json.categories);
+          return json.categories;
+        }
+      }
+    } catch (e) {
+      // Fallback
+    }
+  }
+
+  // 2. Try Supabase Cloud Database if configured
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase.from('categories').select('*').order('created_at', { ascending: true });
@@ -238,6 +275,18 @@ export async function createCategory(cat: Omit<Category, 'id' | 'created_at'>): 
     created_at: new Date().toISOString(),
   };
 
+  // Sync to Neon API
+  if (typeof window !== 'undefined') {
+    try {
+      await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCat),
+      });
+    } catch (e) {}
+  }
+
+  // Sync to Supabase if configured
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase.from('categories').insert([cat]).select().single();
@@ -254,6 +303,7 @@ export async function createCategory(cat: Omit<Category, 'id' | 'created_at'>): 
 }
 
 export async function deleteCategory(id: string): Promise<boolean> {
+  // Sync to Supabase if configured
   if (isSupabaseConfigured && supabase) {
     try {
       await supabase.from('categories').delete().eq('id', id);
@@ -271,7 +321,24 @@ export async function fetchSavedLinks(): Promise<SavedLink[]> {
   const likedIds = getLocalLikedIds();
   let links: SavedLink[] = [];
 
-  if (isSupabaseConfigured && supabase) {
+  // 1. Try Neon Database via /api/links
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch('/api/links', { signal: AbortSignal.timeout(6000) });
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.links) && json.links.length > 0) {
+          links = json.links as SavedLink[];
+          saveLocalLinks(links);
+        }
+      }
+    } catch (e) {
+      // Fallback
+    }
+  }
+
+  // 2. Try Supabase Cloud Database if configured and no links from Neon
+  if (links.length === 0 && isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase.from('saved_links').select('*').order('created_at', { ascending: false });
       if (!error && data && data.length > 0) {
@@ -282,6 +349,7 @@ export async function fetchSavedLinks(): Promise<SavedLink[]> {
     }
   }
 
+  // 3. Fallback to LocalStorage / initialLinks.json
   if (links.length === 0) {
     links = getLocalLinks();
   }
@@ -297,11 +365,23 @@ export async function createSavedLink(link: Omit<SavedLink, 'id' | 'created_at' 
   const now = new Date().toISOString();
   const newLink: SavedLink = {
     ...link,
-    id: `link-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    id: `neon-link-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     created_at: now,
     updated_at: now,
   };
 
+  // Sync to Neon API
+  if (typeof window !== 'undefined') {
+    try {
+      await fetch('/api/links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLink),
+      });
+    } catch (e) {}
+  }
+
+  // Sync to Supabase if configured
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase.from('saved_links').insert([link]).select().single();
@@ -320,6 +400,18 @@ export async function createSavedLink(link: Omit<SavedLink, 'id' | 'created_at' 
 export async function updateSavedLink(id: string, updates: Partial<SavedLink>): Promise<SavedLink | null> {
   const now = new Date().toISOString();
 
+  // Sync to Neon API
+  if (typeof window !== 'undefined') {
+    try {
+      await fetch('/api/links', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates }),
+      });
+    } catch (e) {}
+  }
+
+  // Sync to Supabase if configured
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase
@@ -349,6 +441,14 @@ export async function updateSavedLink(id: string, updates: Partial<SavedLink>): 
 }
 
 export async function deleteSavedLink(id: string): Promise<boolean> {
+  // Sync to Neon API
+  if (typeof window !== 'undefined') {
+    try {
+      await fetch(`/api/links?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    } catch (e) {}
+  }
+
+  // Sync to Supabase if configured
   if (isSupabaseConfigured && supabase) {
     try {
       await supabase.from('saved_links').delete().eq('id', id);

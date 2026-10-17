@@ -217,7 +217,7 @@ export default function OutreachCrmView({
                           }}
                         >
                           <img
-                            src={item.thumbnail_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}
+                            src={item.thumbnail_url || '/storage/placeholder-card.svg'}
                             alt=""
                             referrerPolicy="no-referrer"
                             onError={(e) => {
@@ -225,7 +225,7 @@ export default function OutreachCrmView({
                               if (!img.src.includes('/api/proxy-image') && item.thumbnail_url && item.thumbnail_url.startsWith('http')) {
                                 img.src = `/api/proxy-image?url=${encodeURIComponent(item.thumbnail_url)}`;
                               } else {
-                                img.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80';
+                                img.src = '/storage/placeholder-card.svg';
                               }
                             }}
                             style={{ width: 45, height: 55, borderRadius: 4, objectFit: 'cover' }}

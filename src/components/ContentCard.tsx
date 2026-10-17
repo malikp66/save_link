@@ -191,7 +191,7 @@ export default function ContentCard({
               if (!img.src.includes('/api/proxy-image') && item.thumbnail_url && item.thumbnail_url.startsWith('http')) {
                 img.src = `/api/proxy-image?url=${encodeURIComponent(item.thumbnail_url)}`;
               } else {
-                img.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+                img.src = '/storage/placeholder-card.svg';
               }
             }}
           />

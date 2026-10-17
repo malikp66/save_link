@@ -58,7 +58,7 @@ async function parseTikTok(rawUrl: string, cleanUrl: string): Promise<ParsedLink
         if (d.images && d.images.length > 0 && d.images[0]) {
           coverUrl = d.images[0];
         } else if (coverUrl.includes('.heic')) {
-          coverUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+          coverUrl = '/storage/placeholder-card.svg';
         }
 
         const title = d.title && d.title.trim() ? d.title : `Tren Video TikTok @${username}`;
@@ -77,7 +77,7 @@ async function parseTikTok(rawUrl: string, cleanUrl: string): Promise<ParsedLink
           author_avatar_url: avatarUrl,
           author_profile_url: `https://www.tiktok.com/@${username}`,
           title: title,
-          thumbnail_url: coverUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
+          thumbnail_url: coverUrl || '/storage/placeholder-card.svg',
           audio_title: d.music_info?.title || 'Trending TikTok Sound',
           audio_author: d.music_info?.author || authorName,
           hashtags,

@@ -350,7 +350,7 @@ export default function ContentDetailModal({
                             if (!img.src.includes('/api/proxy-image') && target && target.startsWith('http')) {
                               img.src = `/api/proxy-image?url=${encodeURIComponent(target)}`;
                             } else {
-                              img.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+                              img.src = '/storage/placeholder-card.svg';
                             }
                           }}
                           style={{
@@ -410,11 +410,11 @@ export default function ContentDetailModal({
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, minHeight: 320, background: '#0e111a', gap: 12 }}>
                       <img 
-                        src={currentThumbnail || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'} 
+                        src={currentThumbnail || '/storage/placeholder-card.svg'} 
                         alt={formData.title || item.title}
                         referrerPolicy="no-referrer"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+                          (e.target as HTMLImageElement).src = '/storage/placeholder-card.svg';
                         }}
                         style={{ width: '100%', maxHeight: 280, objectFit: 'contain', borderRadius: 'var(--radius-sm)' }}
                       />
@@ -440,11 +440,11 @@ export default function ContentDetailModal({
                 ) : (
                   <div style={{ position: 'relative', width: '100%', height: 280 }}>
                     <img 
-                      src={currentThumbnail || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'} 
+                      src={currentThumbnail || '/storage/placeholder-card.svg'} 
                       alt={formData.title || item.title}
                       referrerPolicy="no-referrer"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+                        (e.target as HTMLImageElement).src = '/storage/placeholder-card.svg';
                       }}
                       style={{
                         width: '100%',
