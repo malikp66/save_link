@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { Client } = require('pg');
+const { Pool } = require('pg');
 require('dotenv').config();
 
 const thumbDir = path.join(__dirname, '../public/storage/thumbnails');
@@ -30,12 +30,12 @@ async function downloadImageBuffer(url, referer) {
         'Referer': referer || 'https://www.google.com/',
         'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
       },
-      signal: AbortSignal.timeout(10000)
+      signal: AbortSignal.timeout(8000)
     });
     if (!res.ok) return null;
     const contentType = res.headers.get('content-type') || 'image/jpeg';
     const buffer = Buffer.from(await res.arrayBuffer());
-    if (buffer.length < 500) return null; // Filter out 0 byte or empty responses
+    if (buffer.length < 500) return null;
     return { buffer, contentType };
   } catch (e) {
     return null;
@@ -43,37 +43,47 @@ async function downloadImageBuffer(url, referer) {
 }
 
 async function fetchTikTokData(url) {
-  // Try TikWM direct
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const res = await fetch('https://www.tikwm.com/api/?url=' + encodeURIComponent(url));
-      const json = await res.json();
-      if (json.code === 0 && json.data) {
-        return {
-          cover: json.data.cover,
-          avatar: json.data.author?.avatar,
-          author: json.data.author?.unique_id,
-          name: json.data.author?.nickname,
-          title: json.data.title
-        };
-      } else if (json.msg && json.msg.includes('limit')) {
-        await sleep(2500);
-      }
-    } catch (e) {}
-    await sleep(1500);
+  // Clean tracking params
+  const cleanUrl = url.split('?')[0];
+
+  // Try TikWM with original url first, then cleanUrl
+  for (const targetUrl of [url, cleanUrl]) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetch('https://www.tikwm.com/api/?url=' + encodeURIComponent(targetUrl), {
+          signal: AbortSignal.timeout(7000)
+        });
+        const json = await res.json();
+        if (json.code === 0 && json.data) {
+          return {
+            cover: json.data.cover,
+            avatar: json.data.author?.avatar,
+            author: json.data.author?.unique_id,
+            name: json.data.author?.nickname,
+            title: json.data.title
+          };
+        } else if (json.msg && json.msg.includes('limit')) {
+          await sleep(2500);
+        }
+      } catch (e) {}
+      await sleep(1500);
+    }
   }
 
-  // Try unshortening
+  // Try resolving redirect with timeout
   try {
     const red = await fetch(url, {
       redirect: 'manual',
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      signal: AbortSignal.timeout(6000)
     });
     const loc = red.headers.get('location');
     if (loc) {
       const cleanLoc = loc.split('?')[0];
       await sleep(1500);
-      const res2 = await fetch('https://www.tikwm.com/api/?url=' + encodeURIComponent(cleanLoc));
+      const res2 = await fetch('https://www.tikwm.com/api/?url=' + encodeURIComponent(cleanLoc), {
+        signal: AbortSignal.timeout(7000)
+      });
       const json2 = await res2.json();
       if (json2.code === 0 && json2.data) {
         return {
@@ -91,13 +101,14 @@ async function fetchTikTokData(url) {
 }
 
 async function fetchIgProfile(username) {
+  if (!username || username === 'ig_creator' || username.startsWith('creator_')) return null;
   try {
     const res = await fetch(`https://www.instagram.com/${username}/`, {
       headers: {
         'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
       },
-      signal: AbortSignal.timeout(8000)
+      signal: AbortSignal.timeout(6000)
     });
     if (!res.ok) return null;
     const html = await res.text();
@@ -131,9 +142,8 @@ async function fetchIgPost(url) {
   try {
     const mRes = await fetch(`https://www.instagram.com/p/${code}/media/?size=l`, {
       redirect: 'manual',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      signal: AbortSignal.timeout(5000)
     });
     const loc = mRes.headers.get('location');
     if (loc && loc.startsWith('http')) {
@@ -148,7 +158,7 @@ async function fetchIgPost(url) {
         'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
       },
-      signal: AbortSignal.timeout(7000)
+      signal: AbortSignal.timeout(6000)
     });
     if (res.ok) {
       const html = await res.text();
@@ -163,12 +173,16 @@ async function fetchIgPost(url) {
 }
 
 async function main() {
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
-  console.log('Connected to Neon PostgreSQL database.');
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 3,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000
+  });
 
-  // Find all links that have SVG placeholders in media_storage
-  const { rows: targets } = await client.query(`
+  console.log('Connected via connection pool to Neon PostgreSQL.');
+
+  const { rows: targets } = await pool.query(`
     SELECT s.id, s.platform, s.url, s.author_username, s.author_name, s.title
     FROM saved_links s
     JOIN media_storage m ON m.link_id = s.id AND m.media_type = 'thumbnail'
@@ -176,7 +190,7 @@ async function main() {
     ORDER BY s.platform, s.id;
   `);
 
-  console.log(`Found ${targets.length} links with SVG placeholders to re-fetch.`);
+  console.log(`Processing remaining ${targets.length} targets...`);
 
   let recoveredCount = 0;
 
@@ -202,9 +216,9 @@ async function main() {
         if (tt.author) newAuthor = tt.author;
         if (tt.name) newAuthorName = tt.name;
       } else {
-        console.log(`  ⚠️ TikTok content could not be retrieved (private or unavailable).`);
+        console.log(`  ⚠️ TikTok content could not be retrieved.`);
       }
-      await sleep(1500); // 1.5s delay to keep TikWM happy
+      await sleep(1500);
     } else if (item.platform === 'instagram') {
       const isPost = item.url.includes('/p/') || item.url.includes('/reel/');
       if (isPost) {
@@ -213,9 +227,7 @@ async function main() {
           console.log(`  Found IG Post cover: ${postData.cover.substring(0, 50)}...`);
           imgData = await downloadImageBuffer(postData.cover, 'https://www.instagram.com/');
         }
-        // If post cover not found, try getting author profile picture as thumbnail
         if (!imgData && item.author_username && !item.author_username.startsWith('creator_')) {
-          console.log(`  Attempting author profile avatar for @${item.author_username}...`);
           const prof = await fetchIgProfile(item.author_username);
           if (prof && prof.profilePic) {
             imgData = await downloadImageBuffer(prof.profilePic, 'https://www.instagram.com/');
@@ -223,7 +235,6 @@ async function main() {
           }
         }
       } else {
-        // Profile link
         const uMatch = item.url.match(/instagram\.com\/([^/?#]+)/);
         const username = uMatch ? uMatch[1] : item.author_username;
         if (username) {
@@ -240,7 +251,6 @@ async function main() {
       await sleep(1200);
     }
 
-    // If we recovered a real image, store it permanently!
     if (imgData && imgData.buffer) {
       const { buffer, contentType } = imgData;
       const filename = `${item.id}.jpg`;
@@ -249,8 +259,7 @@ async function main() {
       const base64Data = `data:${contentType};base64,${buffer.toString('base64')}`;
       const mediaId = `thumb-${item.id}`;
 
-      // Update media_storage in Neon
-      await client.query(`
+      await pool.query(`
         INSERT INTO media_storage (id, link_id, media_type, original_url, content_type, image_base64, image_data, file_size)
         VALUES ($1, $2, 'thumbnail', $3, $4, $5, $6, $7)
         ON CONFLICT (id) DO UPDATE SET
@@ -260,9 +269,8 @@ async function main() {
           file_size = EXCLUDED.file_size;
       `, [mediaId, item.id, item.url, contentType, base64Data, buffer, buffer.length]);
 
-      // Update saved_links
       const localThumbPath = `/storage/thumbnails/${filename}`;
-      await client.query(`
+      await pool.query(`
         UPDATE saved_links
         SET thumbnail_url = $1,
             author_username = COALESCE($2, author_username),
@@ -271,14 +279,13 @@ async function main() {
         WHERE id = $5;
       `, [localThumbPath, newAuthor || null, newAuthorName || null, newTitle || null, item.id]);
 
-      // If avatar also downloaded
       if (avatarData && avatarData.buffer) {
         const avFilename = `${item.id}.jpg`;
         fs.writeFileSync(path.join(avatarDir, avFilename), avatarData.buffer);
         const avBase64 = `data:${avatarData.contentType};base64,${avatarData.buffer.toString('base64')}`;
         const avMediaId = `avatar-${item.id}`;
 
-        await client.query(`
+        await pool.query(`
           INSERT INTO media_storage (id, link_id, media_type, original_url, content_type, image_base64, image_data, file_size)
           VALUES ($1, $2, 'avatar', $3, $4, $5, $6, $7)
           ON CONFLICT (id) DO UPDATE SET
@@ -288,7 +295,7 @@ async function main() {
             file_size = EXCLUDED.file_size;
         `, [avMediaId, item.id, item.url, avatarData.contentType, avBase64, avatarData.buffer, avatarData.buffer.length]);
 
-        await client.query(`
+        await pool.query(`
           UPDATE saved_links
           SET author_avatar_url = $1
           WHERE id = $2;
@@ -303,12 +310,12 @@ async function main() {
   }
 
   console.log(`\n========================================`);
-  console.log(`Re-fetch complete! Successfully recovered ${recoveredCount} / ${targets.length} thumbnails.`);
+  console.log(`Completed batch! Successfully recovered ${recoveredCount} / ${targets.length} thumbnails.`);
 
-  // Sync to initialLinks.json
+  // Sync back to initialLinks.json
   const initialLinksPath = path.join(__dirname, '../src/lib/initialLinks.json');
   const initial = JSON.parse(fs.readFileSync(initialLinksPath, 'utf8'));
-  const { rows: updatedLinks } = await client.query('SELECT id, thumbnail_url, author_avatar_url, author_username, author_name, title FROM saved_links;');
+  const { rows: updatedLinks } = await pool.query('SELECT id, thumbnail_url, author_avatar_url, author_username, author_name, title FROM saved_links;');
   const linkMap = new Map(updatedLinks.map(l => [l.id, l]));
 
   const syncedInitial = initial.map(item => {
@@ -329,7 +336,7 @@ async function main() {
   fs.writeFileSync(initialLinksPath, JSON.stringify(syncedInitial, null, 2));
   console.log('Synchronized updated links to src/lib/initialLinks.json.');
 
-  await client.end();
+  await pool.end();
 }
 
 main().catch(err => {
