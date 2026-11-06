@@ -62,14 +62,13 @@ export async function extractWithOmniget(rawUrl: string): Promise<OmnigetExtract
     extractor: 'omniget',
   };
 
-  // Node runtime check with safe string execution
   if (typeof window === 'undefined') {
     try {
       const { exec } = await import('child_process');
       const { promisify } = await import('util');
       const execAsync = promisify(exec);
 
-      const cmd = ;
+      const cmd = ['yt-dlp', '--dump-json', '--skip-download', JSON.stringify(cleanUrl)].join(' ');
       const { stdout } = await execAsync(cmd, { timeout: 15000 });
 
       if (stdout) {
@@ -96,7 +95,7 @@ export async function extractWithOmniget(rawUrl: string): Promise<OmnigetExtract
         };
       }
     } catch (err) {
-      console.warn('yt-dlp execution unavailable on serverless edge, returning parsed baseline:', err);
+      console.warn('yt-dlp execution unavailable, returning parsed baseline:', err);
     }
   }
 
