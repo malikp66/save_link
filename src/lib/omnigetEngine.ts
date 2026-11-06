@@ -19,9 +19,6 @@ export interface OmnigetExtractionResult extends ParsedLinkData {
   subtitles?: Array<{ lang: string; url: string }>;
 }
 
-/**
- * Detect platform with extended OpenSelena 1,800+ sites support
- */
 export function detectExtendedPlatform(rawUrl: string): Platform {
   const url = rawUrl.toLowerCase();
   if (url.includes('instagram.com')) return 'instagram';
@@ -36,13 +33,9 @@ export function detectExtendedPlatform(rawUrl: string): Platform {
   return 'other';
 }
 
-/**
- * Normalize and clean URLs for OpenSelena extractors
- */
 export function cleanMediaUrl(rawUrl: string): string {
   try {
     const parsed = new URL(rawUrl.trim());
-    // Strip common tracking and referrer query params
     const strippedParams = ['utm_source', 'utm_medium', 'utm_campaign', 'igsh', 'cplk', 'mdxt', 'srtk', 'exln', 'si'];
     strippedParams.forEach(p => parsed.searchParams.delete(p));
     return parsed.toString();
@@ -51,15 +44,10 @@ export function cleanMediaUrl(rawUrl: string): string {
   }
 }
 
-/**
- * OpenSelena & OmniGet Media Adapter Engine
- * Connects to local yt-dlp / openomni CLI or remote JSON-RPC MCP Bridge
- */
 export async function extractWithOmniget(rawUrl: string): Promise<OmnigetExtractionResult> {
   const cleanUrl = cleanMediaUrl(rawUrl);
   const platform = detectExtendedPlatform(cleanUrl);
 
-  // Default baseline response
   const baseline: OmnigetExtractionResult = {
     platform,
     url: cleanUrl,
@@ -74,22 +62,20 @@ export async function extractWithOmniget(rawUrl: string): Promise<OmnigetExtract
     extractor: 'omniget',
   };
 
-  // If running in Node/Server environment with child_process capabilities
+  // Node runtime check with safe string execution
   if (typeof window === 'undefined') {
     try {
       const { exec } = await import('child_process');
-      const util = await import('util');
-      const execAsync = util.promisify(exec);
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
 
-      // Try yt-dlp JSON dump
-      const { stdout } = await execAsync(, {
-        timeout: 15000,
-      });
+      const cmd = ;
+      const { stdout } = await execAsync(cmd, { timeout: 15000 });
 
       if (stdout) {
         const info = JSON.parse(stdout);
         const tags = Array.isArray(info.tags) ? info.tags : [];
-        const descriptionTags = (info.description || '').match(/#[\w\u0590-\u05ff]+/gi) || [];
+        const descriptionTags = (info.description || '').match(/#[a-zA-Z0-9_]+/g) || [];
         const mergedHashtags = Array.from(new Set([...tags, ...descriptionTags]));
 
         return {
@@ -110,8 +96,7 @@ export async function extractWithOmniget(rawUrl: string): Promise<OmnigetExtract
         };
       }
     } catch (err) {
-      // Fallback gracefully to public oEmbed or parser
-      console.warn('yt-dlp execution unavailable, falling back to standard extractor:', err);
+      console.warn('yt-dlp execution unavailable on serverless edge, returning parsed baseline:', err);
     }
   }
 
