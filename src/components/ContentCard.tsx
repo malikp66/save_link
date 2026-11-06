@@ -51,6 +51,22 @@ const STATUS_LABELS: Record<OutreachStatus, { label: string; className: string }
   archived: { label: 'Arsip / Lewat', className: 'badge-status-archived' },
 };
 
+
+const getPlatformBadge = (platform: string) => {
+  switch (platform) {
+    case 'tiktok': return { label: 'TikTok', bg: 'linear-gradient(135deg, #000000, #25f4ee)', text: '#ffffff', icon: '🎵' };
+    case 'youtube': return { label: 'YouTube', bg: 'linear-gradient(135deg, #ef4444, #b91c1c)', text: '#ffffff', icon: '▶️' };
+    case 'twitter': return { label: 'X (Twitter)', bg: 'linear-gradient(135deg, #1e293b, #0f172a)', text: '#ffffff', icon: '𝕏' };
+    case 'reddit': return { label: 'Reddit', bg: 'linear-gradient(135deg, #f97316, #ea580c)', text: '#ffffff', icon: '🤖' };
+    case 'bilibili': return { label: 'Bilibili', bg: 'linear-gradient(135deg, #38bdf8, #0284c7)', text: '#ffffff', icon: '📺' };
+    case 'pinterest': return { label: 'Pinterest', bg: 'linear-gradient(135deg, #e11d48, #be123c)', text: '#ffffff', icon: '📌' };
+    case 'threads': return { label: 'Threads', bg: 'linear-gradient(135deg, #334155, #1e293b)', text: '#ffffff', icon: '🧵' };
+    case 'instagram':
+    default:
+      return { label: 'Instagram', bg: 'linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)', text: '#ffffff', icon: '📸' };
+  }
+};
+
 export default function ContentCard({
   item,
   category,
