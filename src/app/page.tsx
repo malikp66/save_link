@@ -74,8 +74,7 @@ import {
   BarChart3,
   ChevronDown,
   ChevronUp,
-  RefreshCw,
-  Database
+  RefreshCw
 } from 'lucide-react';
 
 export default function Home() {
