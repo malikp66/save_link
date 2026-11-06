@@ -71,7 +71,11 @@ import {
   Inbox,
   LayoutGrid,
   Users2,
-  BarChart3
+  BarChart3,
+  ChevronDown,
+  ChevronUp,
+  RefreshCw,
+  Database
 } from 'lucide-react';
 
 export default function Home() {
@@ -136,6 +140,7 @@ export default function Home() {
   const [talentTypeFilter, setTalentTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [wishlistOnly, setWishlistOnly] = useState<boolean>(false);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<'newest' | 'highest_er' | 'highest_views' | 'rating'>('newest');
 
   const wishlistCount = useMemo(() => links.filter((l) => l.is_liked).length, [links]);
@@ -364,213 +369,277 @@ export default function Home() {
         {activeTab === 'feed' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18, paddingTop: 10 }}>
             {/* Search & Filter Toolbar */}
-            <div className="glass-panel" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {/* Search input + Platform quick pills */}
-              <div className="filter-search-row">
+            <div className="glass-panel" style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10, borderRadius: 'var(--radius-lg)' }}>
+              {/* Primary Bar: Search + Quick Platforms + Filter Toggle + Database Pill */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                {/* Search input */}
                 <div style={{
-                  flex: 1,
-                  minWidth: 0,
-                  width: '100%',
+                  flex: '1 1 240px',
                   position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
                 }}>
-                  <Search size={16} color="var(--text-dim)" style={{ position: 'absolute', left: 12 }} />
+                  <Search size={15} color="var(--text-dim)" style={{ position: 'absolute', left: 12 }} />
                   <input
                     type="text"
-                    placeholder="Cari kreator, @username, caption, hashtag, atau catatan..."
+                    placeholder="Cari kreator, @username, caption, hashtag..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     id="search-input"
                     style={{
                       width: '100%',
-                      padding: '10px 14px 10px 38px',
-                      borderRadius: 'var(--radius-md)',
+                      padding: '8px 14px 8px 36px',
+                      borderRadius: 'var(--radius-full)',
                       background: 'rgba(255, 255, 255, 0.04)',
                       border: '1px solid var(--border-subtle)',
-                      fontSize: '0.85rem',
+                      fontSize: '0.82rem',
                     }}
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      style={{ position: 'absolute', right: 12, fontSize: '0.75rem', color: 'var(--text-muted)' }}
+                      style={{ position: 'absolute', right: 12, fontSize: '0.72rem', color: 'var(--text-muted)' }}
                     >
                       Clear
                     </button>
                   )}
                 </div>
 
-                {/* Platform filter pills */}
-                <div className="filter-platform-pills">
-                  <button
-                    onClick={() => setPlatformFilter('all')}
-                    style={{
-                      padding: '7px 12px',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      background: platformFilter === 'all' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                      color: platformFilter === 'all' ? '#ffffff' : 'var(--text-muted)',
-                      border: '1px solid var(--border-subtle)',
-                    }}
-                  >
-                    Semua
-                  </button>
-                  <button
-                    onClick={() => setPlatformFilter('tiktok')}
-                    style={{
-                      padding: '7px 12px',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      background: platformFilter === 'tiktok' ? 'rgba(6, 182, 212, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                      color: platformFilter === 'tiktok' ? '#22d3ee' : 'var(--text-muted)',
-                      border: platformFilter === 'tiktok' ? '1px solid rgba(6, 182, 212, 0.4)' : '1px solid var(--border-subtle)',
-                    }}
-                  >
-                    TikTok
-                  </button>
-                  <button
-                    onClick={() => setPlatformFilter('instagram')}
-                    style={{
-                      padding: '7px 12px',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      background: platformFilter === 'instagram' ? 'rgba(244, 63, 94, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                      color: platformFilter === 'instagram' ? '#fb7185' : 'var(--text-muted)',
-                      border: platformFilter === 'instagram' ? '1px solid rgba(244, 63, 94, 0.4)' : '1px solid var(--border-subtle)',
-                    }}
-                  >
-                    Instagram
-                  </button>
+                {/* Platform Quick Pills */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  {[
+                    { id: 'all', label: 'Semua', color: '#ffffff' },
+                    { id: 'instagram', label: 'Instagram', color: '#fb7185' },
+                    { id: 'tiktok', label: 'TikTok', color: '#22d3ee' },
+                    { id: 'youtube', label: 'YouTube', color: '#f87171' },
+                    { id: 'twitter', label: 'X', color: '#cbd5e1' },
+                  ].map((p) => {
+                    const active = platformFilter === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => setPlatformFilter(p.id as any)}
+                        style={{
+                          padding: '5px 11px',
+                          borderRadius: 'var(--radius-full)',
+                          fontSize: '0.75rem',
+                          fontWeight: active ? 700 : 500,
+                          background: active ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                          color: active ? p.color : 'var(--text-muted)',
+                          border: active ? `1px solid ${p.color}50` : '1px solid var(--border-subtle)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
 
+                  {/* Wishlist Pill */}
                   <button
                     onClick={() => setWishlistOnly(!wishlistOnly)}
                     style={{
-                      padding: '7px 12px',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '0.78rem',
+                      padding: '5px 11px',
+                      borderRadius: 'var(--radius-full)',
+                      fontSize: '0.75rem',
                       fontWeight: 700,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 5,
+                      gap: 4,
                       background: wishlistOnly 
                         ? 'linear-gradient(135deg, rgba(2, 132, 199, 0.45), rgba(14, 165, 233, 0.45))' 
-                        : 'rgba(255, 255, 255, 0.04)',
+                        : 'rgba(255, 255, 255, 0.03)',
                       color: wishlistOnly ? '#38bdf8' : 'var(--text-muted)',
                       border: wishlistOnly ? '1px solid #38bdf8' : '1px solid var(--border-subtle)',
-                      boxShadow: wishlistOnly ? '0 0 14px rgba(56, 189, 248, 0.4)' : 'none',
+                      boxShadow: wishlistOnly ? '0 0 10px rgba(56, 189, 248, 0.35)' : 'none',
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease',
+                      transition: 'all 0.15s ease',
                     }}
                   >
-                    <span style={{ fontSize: '13px', lineHeight: 1 }}>💦</span>
+                    <span>💦</span>
                     <span>Wishlist {wishlistCount > 0 ? `(${wishlistCount})` : ''}</span>
                   </button>
                 </div>
-              </div>
 
-              {/* Talent Type / Persona Filter Pills */}
-              <div className="filter-scroll-row">
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f472b6', flexShrink: 0 }}>
-                  Tipe Cewe:
-                </span>
-                <div className="filter-pill-scroll">
+                {/* Filter Collapsible Toggle & Supabase Compact Status */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
                   <button
-                    onClick={() => setTalentTypeFilter('all')}
+                    onClick={() => setShowFilters(!showFilters)}
                     style={{
-                      whiteSpace: 'nowrap',
-                      padding: '4px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      padding: '6px 12px',
                       borderRadius: 'var(--radius-full)',
-                      fontSize: '0.73rem',
+                      fontSize: '0.75rem',
                       fontWeight: 600,
-                      background: talentTypeFilter === 'all' ? '#ec4899' : 'rgba(255, 255, 255, 0.04)',
-                      color: '#ffffff',
-                      border: '1px solid rgba(236, 72, 153, 0.3)',
+                      background: showFilters || categoryFilter !== 'all' || talentTypeFilter !== 'all' || statusFilter !== 'all'
+                        ? 'rgba(168, 85, 247, 0.18)'
+                        : 'rgba(255, 255, 255, 0.04)',
+                      color: showFilters || categoryFilter !== 'all' || talentTypeFilter !== 'all' || statusFilter !== 'all'
+                        ? '#c084fc'
+                        : 'var(--text-muted)',
+                      border: '1px solid rgba(168, 85, 247, 0.3)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
                     }}
                   >
-                    Semua Tipe
+                    <SlidersHorizontal size={13} />
+                    <span>Filter & Urutkan</span>
+                    {showFilters ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                   </button>
-                  {TALENT_TYPES.map((type) => (
+
+                  {/* Supabase Status Compact Pill */}
+                  <div 
+                    title={`Supabase: ${supabaseStatus?.mode || 'checking...'} (${supabaseStatus?.message || ''})`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      padding: '5px 10px',
+                      borderRadius: 'var(--radius-full)',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      background: supabaseStatus?.connected ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                      color: supabaseStatus?.connected ? '#4ade80' : '#f87171',
+                      border: `1px solid ${supabaseStatus?.connected ? 'rgba(34, 197, 94, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+                    }}
+                  >
+                    <span style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: supabaseStatus?.connected ? '#22c55e' : '#ef4444',
+                      boxShadow: supabaseStatus?.connected ? '0 0 6px #22c55e' : 'none',
+                    }} />
+                    <span>{supabaseStatus?.connected ? 'Supabase Connected' : 'Local Fallback'}</span>
                     <button
-                      key={type}
-                      onClick={() => setTalentTypeFilter(type)}
-                      style={{
-                        whiteSpace: 'nowrap',
-                        padding: '4px 10px',
-                        borderRadius: 'var(--radius-full)',
-                        fontSize: '0.73rem',
-                        fontWeight: 600,
-                        background: talentTypeFilter === type ? 'rgba(236, 72, 153, 0.3)' : 'rgba(255, 255, 255, 0.03)',
-                        color: talentTypeFilter === type ? '#f472b6' : 'var(--text-muted)',
-                        border: `1px solid ${talentTypeFilter === type ? '#ec4899' : 'var(--border-subtle)'}`,
-                      }}
+                      onClick={checkStatus}
+                      style={{ background: 'none', border: 'none', color: 'inherit', padding: 0, cursor: 'pointer', display: 'flex' }}
+                      title="Re-check Database"
                     >
-                      {type}
+                      <RefreshCw size={10} />
                     </button>
-                  ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Category Pills */}
-              <div className="filter-scroll-row">
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', flexShrink: 0 }}>
-                  Kategori:
-                </span>
-                <div className="filter-pill-scroll">
-                  <button
-                    onClick={() => setCategoryFilter('all')}
-                    style={{
-                      whiteSpace: 'nowrap',
-                      padding: '4px 10px',
-                      borderRadius: 'var(--radius-full)',
-                      fontSize: '0.73rem',
-                      fontWeight: 600,
-                      background: categoryFilter === 'all' ? 'var(--primary)' : 'rgba(255, 255, 255, 0.05)',
-                      color: '#ffffff',
-                    }}
-                  >
-                    Semua Kategori
-                  </button>
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setCategoryFilter(cat.id)}
-                      style={{
-                        whiteSpace: 'nowrap',
-                        padding: '4px 10px',
-                        borderRadius: 'var(--radius-full)',
-                        fontSize: '0.73rem',
-                        fontWeight: 600,
-                        background: categoryFilter === cat.id ? `${cat.color}35` : 'rgba(255, 255, 255, 0.04)',
-                        color: categoryFilter === cat.id ? cat.color : 'var(--text-muted)',
-                        border: `1px solid ${categoryFilter === cat.id ? cat.color : 'var(--border-subtle)'}`,
-                      }}
-                    >
-                      {cat.name}
-                    </button>
-                  ))}
+              {/* Collapsible Secondary Filter Bar (Talent Type, Category, Selectors) */}
+              {showFilters && (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                  paddingTop: 10,
+                  borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                  animation: 'fadeIn 0.2s ease',
+                }}>
+                  {/* Talent Type / Persona Filter Pills */}
+                  <div className="filter-scroll-row">
+                    <span style={{ fontSize: '0.73rem', fontWeight: 700, color: '#f472b6', flexShrink: 0 }}>
+                      Tipe Cewe:
+                    </span>
+                    <div className="filter-pill-scroll">
+                      <button
+                        onClick={() => setTalentTypeFilter('all')}
+                        style={{
+                          whiteSpace: 'nowrap',
+                          padding: '3px 9px',
+                          borderRadius: 'var(--radius-full)',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                          background: talentTypeFilter === 'all' ? '#ec4899' : 'rgba(255, 255, 255, 0.04)',
+                          color: '#ffffff',
+                          border: '1px solid rgba(236, 72, 153, 0.3)',
+                        }}
+                      >
+                        Semua Tipe
+                      </button>
+                      {TALENT_TYPES.map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => setTalentTypeFilter(type)}
+                          style={{
+                            whiteSpace: 'nowrap',
+                            padding: '3px 9px',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            background: talentTypeFilter === type ? 'rgba(236, 72, 153, 0.3)' : 'rgba(255, 255, 255, 0.03)',
+                            color: talentTypeFilter === type ? '#f472b6' : 'var(--text-muted)',
+                            border: `1px solid ${talentTypeFilter === type ? '#ec4899' : 'var(--border-subtle)'}`,
+                          }}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Category Pills */}
+                  <div className="filter-scroll-row">
+                    <span style={{ fontSize: '0.73rem', fontWeight: 700, color: 'var(--primary)', flexShrink: 0 }}>
+                      Kategori:
+                    </span>
+                    <div className="filter-pill-scroll">
+                      <button
+                        onClick={() => setCategoryFilter('all')}
+                        style={{
+                          whiteSpace: 'nowrap',
+                          padding: '3px 9px',
+                          borderRadius: 'var(--radius-full)',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                          background: categoryFilter === 'all' ? 'var(--primary)' : 'rgba(255, 255, 255, 0.05)',
+                          color: '#ffffff',
+                        }}
+                      >
+                        Semua Kategori
+                      </button>
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => setCategoryFilter(cat.id)}
+                          style={{
+                            whiteSpace: 'nowrap',
+                            padding: '3px 9px',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            background: categoryFilter === cat.id ? `${cat.color}35` : 'rgba(255, 255, 255, 0.04)',
+                            color: categoryFilter === cat.id ? cat.color : 'var(--text-muted)',
+                            border: `1px solid ${categoryFilter === cat.id ? cat.color : 'var(--border-subtle)'}`,
+                          }}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sort & Status Selectors */}
+                  <div className="filter-selectors-grid" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <div style={{ flex: '1 1 180px' }}>
+                      <CustomSelect
+                        value={statusFilter}
+                        onChange={(val) => setStatusFilter(val)}
+                        options={STATUS_FILTER_OPTIONS}
+                        size="sm"
+                      />
+                    </div>
+
+                    <div style={{ flex: '1 1 180px' }}>
+                      <CustomSelect
+                        value={sortBy}
+                        onChange={(val) => setSortBy(val as any)}
+                        options={SORT_OPTIONS}
+                        size="sm"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              {/* Sort & Status Selectors */}
-              <div className="filter-selectors-grid">
-                <CustomSelect
-                  value={statusFilter}
-                  onChange={(val) => setStatusFilter(val)}
-                  options={STATUS_FILTER_OPTIONS}
-                  size="sm"
-                />
-
-                <CustomSelect
-                  value={sortBy}
-                  onChange={(val) => setSortBy(val as any)}
-                  options={SORT_OPTIONS}
-                  size="sm"
-                />
-              </div>
+              )}
             </div>
 
             {/* Content Cards Grid */}
