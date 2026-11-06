@@ -239,9 +239,30 @@ export default function ContentCard({
           zIndex: 10,
         }}>
           {/* Platform Badge */}
-          <span className={`badge ${isTiktok ? 'badge-tiktok' : 'badge-ig'}`}>
-            {isTiktok ? 'TikTok' : 'Instagram'}
-          </span>
+          {(() => {
+            const pBadge = getPlatformBadge(item.platform);
+            return (
+              <span 
+                className="badge"
+                style={{
+                  background: pBadge.bg,
+                  color: pBadge.text,
+                  border: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontWeight: 700,
+                  fontSize: '0.68rem',
+                  padding: '2px 8px',
+                  borderRadius: 'var(--radius-full)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                }}
+              >
+                <span>{pBadge.icon}</span>
+                <span>{pBadge.label}</span>
+              </span>
+            );
+          })()}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, pointerEvents: 'auto' }}>
             {/* Engagement Rate Badge */}
