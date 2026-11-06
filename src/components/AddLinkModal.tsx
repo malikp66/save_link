@@ -62,7 +62,7 @@ export default function AddLinkModal({
     setErrorMsg('');
 
     try {
-      const res = await fetch('/api/parse-link', {
+      const res = await fetch('/api/extract-media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: url.trim() }),

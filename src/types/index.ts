@@ -1,4 +1,4 @@
-export type Platform = 'instagram' | 'tiktok';
+export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'reddit' | 'bilibili' | 'pinterest' | 'twitch' | 'threads' | 'other';
 
 export type OutreachStatus = 
   | 'saved' 
