@@ -491,7 +491,7 @@ export default function Home() {
 
                   {/* Supabase Status Compact Pill */}
                   <div 
-                    title={`Supabase: ${supabaseStatus?.mode || 'checking...'} (${supabaseStatus?.message || ''})`}
+                    title={`Supabase: ${supabaseStatus?.isConnected ? 'connected' : 'local-fallback'} (${supabaseStatus?.message || ''})`}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -500,19 +500,19 @@ export default function Home() {
                       borderRadius: 'var(--radius-full)',
                       fontSize: '0.72rem',
                       fontWeight: 600,
-                      background: supabaseStatus?.connected ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                      color: supabaseStatus?.connected ? '#4ade80' : '#f87171',
-                      border: `1px solid ${supabaseStatus?.connected ? 'rgba(34, 197, 94, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+                      background: supabaseStatus?.isConnected ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                      color: supabaseStatus?.isConnected ? '#4ade80' : '#f87171',
+                      border: `1px solid ${supabaseStatus?.isConnected ? 'rgba(34, 197, 94, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
                     }}
                   >
                     <span style={{
                       width: 6,
                       height: 6,
                       borderRadius: '50%',
-                      background: supabaseStatus?.connected ? '#22c55e' : '#ef4444',
-                      boxShadow: supabaseStatus?.connected ? '0 0 6px #22c55e' : 'none',
+                      background: supabaseStatus?.isConnected ? '#22c55e' : '#ef4444',
+                      boxShadow: supabaseStatus?.isConnected ? '0 0 6px #22c55e' : 'none',
                     }} />
-                    <span>{supabaseStatus?.connected ? 'Supabase Connected' : 'Local Fallback'}</span>
+                    <span>{supabaseStatus?.isConnected ? 'Supabase Connected' : 'Local Fallback'}</span>
                     <button
                       onClick={checkStatus}
                       style={{ background: 'none', border: 'none', color: 'inherit', padding: 0, cursor: 'pointer', display: 'flex' }}
